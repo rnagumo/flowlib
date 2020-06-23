@@ -30,6 +30,7 @@ COPY tests/ tests/
 COPY setup.py setup.py
 
 # Install package
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir .
 
 # Install other requirements for examples
