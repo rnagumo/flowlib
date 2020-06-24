@@ -1,5 +1,10 @@
 
-"""Layers for flow models."""
+"""Layers for flow models.
+
+ref)
+https://github.com/chaiyujin/glow-pytorch/blob/master/glow/modules.py
+https://github.com/masa-su/pixyz/blob/master/pixyz/flows/normalizations.py
+"""
 
 from typing import Tuple
 
