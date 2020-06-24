@@ -19,13 +19,13 @@ class ActNorm2d(FlowLayer):
     """Activation normalization layer for 2D data.
 
     Args:
-        in_channel (int): Channel size of input data.
+        in_channels (int): Channel size of input data.
     """
 
-    def __init__(self, in_channel: int):
+    def __init__(self, in_channels: int):
         super().__init__()
 
-        in_size = (1, in_channel, 1, 1)
+        in_size = (1, in_channels, 1, 1)
         self.weight = nn.Parameter(torch.ones(in_size))
         self.bias = nn.Parameter(torch.zeros(in_size))
         self.initialized = False

@@ -9,7 +9,7 @@ import flowlib
 class TestInvertibleConv(unittest.TestCase):
 
     def setUp(self):
-        self.model = flowlib.InvertibleConv(in_channel=3)
+        self.model = flowlib.InvertibleConv(in_channels=3)
 
     def test_forward(self):
         x = torch.randn(4, 3, 8, 8)
@@ -28,7 +28,7 @@ class TestInvertibleConv(unittest.TestCase):
 class TestInvertibleConvLU(unittest.TestCase):
 
     def setUp(self):
-        self.model = flowlib.InvertibleConvLU(in_channel=3)
+        self.model = flowlib.InvertibleConvLU(in_channels=3)
 
     def test_forward(self):
         x = torch.randn(4, 3, 8, 8)

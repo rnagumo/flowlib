@@ -20,13 +20,13 @@ class InvertibleConv(FlowLayer):
     """Invertible 1 x 1 convolutional layer.
 
     Args:
-        in_channel (int): Channel size of input data.
+        in_channels (int): Channel size of input data.
     """
 
-    def __init__(self, in_channel: int):
+    def __init__(self, in_channels: int):
         super().__init__()
 
-        self.weight = nn.Parameter(torch.empty(in_channel, in_channel))
+        self.weight = nn.Parameter(torch.empty(in_channels, in_channels))
         nn.init.orthogonal_(self.weight)
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
@@ -72,13 +72,13 @@ class InvertibleConvLU(FlowLayer):
     """Invertible 1 x 1 convolutional layer with LU decomposition.
 
     Args:
-        in_channel (int): Channel size of input data.
+        in_channels (int): Channel size of input data.
     """
 
-    def __init__(self, in_channel: int):
+    def __init__(self, in_channels: int):
         super().__init__()
 
-        weight = torch.empty(in_channel, in_channel)
+        weight = torch.empty(in_channels, in_channels)
         nn.init.orthogonal_(weight)
 
         # LU decomposition
@@ -97,7 +97,7 @@ class InvertibleConvLU(FlowLayer):
         self.s_sign = torch.sign(s)
         self.s_log = nn.Parameter(s.abs().log())
 
-        self.i_mat = torch.eye(in_channel)
+        self.i_mat = torch.eye(in_channels)
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         """Forward propagation z = f(x) with log-determinant Jacobian.

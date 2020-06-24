@@ -9,7 +9,7 @@ import flowlib
 class TestActNorm2d(unittest.TestCase):
 
     def setUp(self):
-        self.model = flowlib.ActNorm2d(in_channel=3)
+        self.model = flowlib.ActNorm2d(in_channels=3)
 
     def test_forward(self):
         x = torch.randn(4, 3, 8, 8)
