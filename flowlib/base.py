@@ -41,6 +41,9 @@ class FlowLayer(nn.Module):
 class FlowModel(nn.Module):
     """Base class for Flow models.
 
+    Args:
+        z_size (tuple, optional): Tuple of latent z size.
+
     Attributes:
         flow_list (nn.ModuleList): Module list of `FlowLayer` classes.
     """
