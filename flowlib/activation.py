@@ -13,6 +13,8 @@ class ActNorm2d(FlowLayer):
     """Activation normalization layer for 2D data.
 
     Args:
+        in_channel (int): Channel size of input data.
+        scale (float, optional): Scale parameter.
     """
 
     def __init__(self, in_channel: int, scale: float = 1.0):
