@@ -16,6 +16,7 @@ class TestInvertibleConv(unittest.TestCase):
         z, logdet = self.model(x)
 
         self.assertTupleEqual(z.size(), x.size())
+        self.assertFalse(torch.isnan(z).any())
         self.assertTupleEqual(logdet.size(), ())
 
     def test_inverse(self):
@@ -23,6 +24,7 @@ class TestInvertibleConv(unittest.TestCase):
         x = self.model.inverse(z)
 
         self.assertTupleEqual(x.size(), z.size())
+        self.assertFalse(torch.isnan(x).any())
 
 
 class TestInvertibleConvLU(unittest.TestCase):
@@ -35,6 +37,7 @@ class TestInvertibleConvLU(unittest.TestCase):
         z, logdet = self.model(x)
 
         self.assertTupleEqual(z.size(), x.size())
+        self.assertFalse(torch.isnan(z).any())
         self.assertTupleEqual(logdet.size(), ())
 
     def test_inverse(self):
@@ -42,6 +45,7 @@ class TestInvertibleConvLU(unittest.TestCase):
         x = self.model.inverse(z)
 
         self.assertTupleEqual(x.size(), z.size())
+        self.assertFalse(torch.isnan(x).any())
 
 
 if __name__ == "__main__":
