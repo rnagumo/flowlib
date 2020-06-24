@@ -16,6 +16,7 @@ class TestResNet(unittest.TestCase):
         z = self.model(x)
 
         self.assertTupleEqual(z.size(), x.size())
+        self.assertFalse(torch.isnan(z).any())
 
 
 if __name__ == "__main__":
