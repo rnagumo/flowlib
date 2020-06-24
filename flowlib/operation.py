@@ -7,7 +7,9 @@ https://github.com/masa-su/pixyz/blob/master/pixyz/flows/operations.py
 
 from typing import Tuple
 
+import torch
 from torch import Tensor
+from torch.nn import functional as F
 
 from .base import FlowLayer
 
@@ -84,5 +86,60 @@ class Unsqueeze(Squeeze):
         """
 
         x, _ = super().forward(z)
+
+        return x
+
+
+class Preprocess(FlowLayer):
+    """Preprocess for input images."""
+
+    def __init__(self):
+        super().__init__()
+
+        self.constraint = torch.tensor([0.05])
+
+    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
+        """Forward propagation z = f(x) with log-determinant Jacobian.
+
+        Args:
+            x (torch.Tensor): Observations, size `(batch, *)`.
+
+        Returns:
+            z (torch.Tensor): Encoded latents, size `(batch, *)`.
+            logdet (torch.Tensor): Log determinant Jacobian.
+        """
+
+        # 1. Transform data range: [0, 1] -> [0, 255]
+        x = x * 255
+
+        # 2-1. Add noise to pixels to dequantize: [0, 255] -> [0, 1]
+        x = (x + torch.randn_like(x)) / 256
+
+        # 2-2. Transform pixel valueswith logit:  [0, 1] -> (0, 1)
+        x = (1 + (2 * x - 1) * (1 - self.constraint)) / 2
+
+        # 2-3. Logit transform
+        z = x.log() - (1 - x).log()
+
+        # Log determinant
+        logdet = (
+            F.softplus(z) + F.softplus(-z)
+            - F.softplus(self.constraint.log() - (1 - self.constraint).log()))
+        logdet = logdet.sum()
+
+        return z, logdet
+
+    def inverse(self, z: Tensor) -> Tensor:
+        """Inverse propagation x = f^{-1}(z).
+
+        Args:
+            z (torch.Tensor): latents, size `(batch, *)`.
+
+        Returns:
+            x (torch.Tensor): Decoded Observations, size `(batch, *)`.
+        """
+
+        # Transform data range: (-inf, inf) -> (0, 1)
+        x = torch.sigmoid(z)
 
         return x

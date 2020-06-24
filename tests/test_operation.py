@@ -75,5 +75,25 @@ class TestUnsqueeze(unittest.TestCase):
         self.assertTrue((x == x_true).all())
 
 
+class TestPreprocess(unittest.TestCase):
+
+    def setUp(self):
+        self.model = flowlib.Preprocess()
+
+    def test_forward(self):
+        x = torch.rand(4, 3, 8, 8)
+        z, logdet = self.model(x)
+
+        self.assertTupleEqual(z.size(), x.size())
+        self.assertTupleEqual(logdet.size(), ())
+
+    def test_inverse(self):
+        z = torch.randn(4, 3, 8, 8) * 100
+        x = self.model.inverse(z)
+
+        self.assertTupleEqual(x.size(), z.size())
+        self.assertTrue((x >= 0).all() and (x <= 1).all())
+
+
 if __name__ == "__main__":
     unittest.main()
