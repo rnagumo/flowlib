@@ -86,7 +86,7 @@ class FlowModel(nn.Module):
         log_prob = nll_normal(z, self._prior_mu, self._prior_var)
         loss = (log_prob + logdet).mean()
 
-        return {"loss": loss}
+        return {"loss": loss, "log_prob": log_prob.mean(), "logdet": logdet}
 
     def inference(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         """Inferences latents and calculates loss.
