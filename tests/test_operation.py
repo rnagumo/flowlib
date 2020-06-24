@@ -86,12 +86,14 @@ class TestPreprocess(unittest.TestCase):
 
         self.assertTupleEqual(z.size(), x.size())
         self.assertTupleEqual(logdet.size(), ())
+        self.assertFalse(torch.isnan(z).any())
 
     def test_inverse(self):
         z = torch.randn(4, 3, 8, 8) * 100
         x = self.model.inverse(z)
 
         self.assertTupleEqual(x.size(), z.size())
+        self.assertFalse(torch.isnan(x).any())
         self.assertTrue((x >= 0).all() and (x <= 1).all())
 
 
