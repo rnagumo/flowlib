@@ -3,7 +3,10 @@ from setuptools import setup, find_packages
 
 
 install_requires = [
-    "torch==1.5.0",
+    "torch==1.5.1",
+    "torchvision==0.6.1",
+    "tqdm==4.46.1",
+    "tensorboardX==2.0",
 ]
 
 
