@@ -96,7 +96,7 @@ class Preprocess(FlowLayer):
     def __init__(self):
         super().__init__()
 
-        self.constraint = torch.tensor([0.05])
+        self.register_buffer("constraint", torch.tensor([0.05]))
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         """Forward propagation z = f(x) with log-determinant Jacobian.
