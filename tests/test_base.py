@@ -25,7 +25,7 @@ class TestFlowModel(unittest.TestCase):
         ])
 
     def test_init(self):
-        model = flowlib.FlowModel(z_size=(2, 3, 4))
+        model = flowlib.FlowModel(in_size=(2, 3, 4))
         model.flow_list = nn.ModuleList([
             TempLayer(), TempLayer()
         ])
@@ -62,7 +62,7 @@ class TestFlowModel(unittest.TestCase):
         self.assertTupleEqual(x.size(), z.size())
 
     def test_sample(self):
-        model = flowlib.FlowModel(z_size=(2, 3, 4))
+        model = flowlib.FlowModel(in_size=(2, 3, 4))
         model.flow_list = nn.ModuleList([
             TempLayer(), TempLayer()
         ])
