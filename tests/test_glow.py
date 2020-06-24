@@ -49,6 +49,15 @@ class TestGlow(unittest.TestCase):
         self.assertTupleEqual(x.size(), (5, 3, 32, 32))
         self.assertFalse(torch.isnan(x).any())
 
+    def test_other_shape(self):
+        model = flowlib.Glow(3, 64, in_size=(3, 64, 64))
+        x = torch.rand(2, 3, 64, 64)
+        z, logdet = model.inference(x)
+
+        self.assertTupleEqual(z.size(), x.size())
+        self.assertFalse(torch.isnan(z).any())
+        self.assertTupleEqual(logdet.size(), ())
+
 
 if __name__ == "__main__":
     unittest.main()
