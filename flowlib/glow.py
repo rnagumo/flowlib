@@ -59,12 +59,12 @@ class Glow(FlowModel):
     Args:
         in_channels (int, optional): Number of channels in input image.
         mid_channels (int, optional): Number of channels in mid image.
-        in_size (tuple, optional): Tuple of input image size, `(c, h, w)`.
+        image_size (int, optional): Size of input image.
     """
 
     def __init__(self, in_channels: int = 3, mid_channels: int = 64,
-                 in_size: tuple = (3, 32, 32)):
-        super().__init__(in_size)
+                 image_size: int = 32):
+        super().__init__(in_size=(in_channels, image_size, image_size))
 
         flow_list = [Preprocess(), Squeeze()]
 

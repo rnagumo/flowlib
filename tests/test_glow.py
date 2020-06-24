@@ -50,7 +50,7 @@ class TestGlow(unittest.TestCase):
         self.assertFalse(torch.isnan(x).any())
 
     def test_other_shape(self):
-        model = flowlib.Glow(3, 64, in_size=(3, 64, 64))
+        model = flowlib.Glow(3, 64, image_size=64)
         x = torch.rand(2, 3, 64, 64)
         z, logdet = model.inference(x)
 
