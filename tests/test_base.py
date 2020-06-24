@@ -10,7 +10,7 @@ import flowlib
 # Temporal layer class
 class TempLayer(nn.Module):
     def forward(self, x):
-        return x, x.new_ones((x.size(0),))
+        return x, x.abs().mean()
 
     def inverse(self, z):
         return z
@@ -51,7 +51,7 @@ class TestFlowModel(unittest.TestCase):
         z, logdet = self.model.inference(x)
 
         self.assertTupleEqual(z.size(), x.size())
-        self.assertTupleEqual(logdet.size(), (x.size(0),))
+        self.assertTupleEqual(logdet.size(), ())
 
     def test_inverse(self):
         z = torch.randn(2, 3)

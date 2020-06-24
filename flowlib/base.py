@@ -20,7 +20,7 @@ class FlowLayer(nn.Module):
 
         Returns:
             z (torch.Tensor): Encoded latents, size `(batch, *)`.
-            logdet (torch.Tensor): Log determinant Jacobian, size `(batch, *)`.
+            logdet (torch.Tensor): Log determinant Jacobian.
         """
 
         raise NotImplementedError
@@ -96,10 +96,10 @@ class FlowModel(nn.Module):
 
         Returns:
             z (torch.Tensor): Encoded latents, size `(batch, *)`.
-            logdet (torch.Tensor): Log determinant Jacobian, size `(batch, *)`.
+            logdet (torch.Tensor): Log determinant Jacobian.
         """
 
-        logdet = x.new_zeros((x.size(0),))
+        logdet = x.new_zeros(())
 
         for flow in self.flow_list:
             x, _logdet = flow(x)
