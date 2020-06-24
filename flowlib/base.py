@@ -55,8 +55,8 @@ class FlowModel(nn.Module):
         self.flow_list = nn.ModuleList()
 
         # Prior p(z)
-        self._prior_mu = torch.zeros(in_size)
-        self._prior_var = torch.ones(in_size)
+        self.register_buffer("_prior_mu", torch.zeros(in_size))
+        self.register_buffer("_prior_var", torch.ones(in_size))
 
     def forward(self, x: Tensor) -> Tensor:
         """Forward propagation z = f(x).
