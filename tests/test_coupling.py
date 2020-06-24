@@ -23,6 +23,7 @@ class TestAffineCoupling(unittest.TestCase):
         z, logdet = model(x)
 
         self.assertTupleEqual(z.size(), x.size())
+        self.assertFalse(torch.isnan(z).any())
         self.assertTupleEqual(logdet.size(), ())
 
         # Inverse
@@ -30,6 +31,7 @@ class TestAffineCoupling(unittest.TestCase):
         x = model.inverse(z)
 
         self.assertTupleEqual(x.size(), z.size())
+        self.assertFalse(torch.isnan(x).any())
 
     def test_checkerboard_true(self):
         self.base_case("checkerboard", True)
