@@ -44,8 +44,8 @@ class ActNorm2d(FlowLayer):
         if not self.initialized:
             self.initialize_parameters(x)
 
-        x = x + self.bias
-        x = x * torch.exp(self.weight)
+        z = x + self.bias
+        z = z * torch.exp(self.weight)
 
         # Compute Jacobian
         *_, h, w = x.size()
@@ -66,10 +66,10 @@ class ActNorm2d(FlowLayer):
         if not self.initialized:
             self.initialize_parameters(z)
 
-        z = z * torch.exp(-self.weight)
-        z = z - self.bias
+        x = z * torch.exp(-self.weight)
+        x = x - self.bias
 
-        return z
+        return x
 
     def initialize_parameters(self, x: Tensor, eps: float = 1e-8) -> None:
         """Initializes parameters with first given data.
