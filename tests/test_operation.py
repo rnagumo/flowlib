@@ -85,6 +85,7 @@ class TestChannelwiseSplit(unittest.TestCase):
         z, logdet = self.model(x)
 
         self.assertTupleEqual(z.size(), (4, 2, 8, 8))
+        self.assertFalse(torch.isnan(z).any())
         self.assertTupleEqual(logdet.size(), ())
 
     def test_inverse(self):
@@ -92,6 +93,7 @@ class TestChannelwiseSplit(unittest.TestCase):
         x = self.model.inverse(z)
 
         self.assertTupleEqual(x.size(), (4, 4, 8, 8))
+        self.assertFalse(torch.isnan(x).any())
 
 
 class TestPreprocess(unittest.TestCase):
