@@ -5,4 +5,4 @@ from .coupling import AffineCoupling, checkerboard_mask, channel_wise_mask
 from .glow import Glow
 from .neuralnet import ResidualBlock
 from .normalization import ActNorm2d
-from .operation import Squeeze, Unsqueeze, Preprocess
+from .operation import Squeeze, Unsqueeze, ChannelwiseSplit, Preprocess

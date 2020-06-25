@@ -75,6 +75,25 @@ class TestUnsqueeze(unittest.TestCase):
         self.assertTrue((x == x_true).all())
 
 
+class TestChannelwiseSplit(unittest.TestCase):
+
+    def setUp(self):
+        self.model = flowlib.ChannelwiseSplit(4)
+
+    def test_forward(self):
+        x = torch.rand(4, 4, 8, 8)
+        z, logdet = self.model(x)
+
+        self.assertTupleEqual(z.size(), (4, 2, 8, 8))
+        self.assertTupleEqual(logdet.size(), ())
+
+    def test_inverse(self):
+        z = torch.randn(4, 2, 8, 8)
+        x = self.model.inverse(z)
+
+        self.assertTupleEqual(x.size(), (4, 4, 8, 8))
+
+
 class TestPreprocess(unittest.TestCase):
 
     def setUp(self):

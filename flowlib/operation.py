@@ -8,10 +8,10 @@ https://github.com/masa-su/pixyz/blob/master/pixyz/flows/operations.py
 from typing import Tuple
 
 import torch
-from torch import Tensor
+from torch import Tensor, nn
 from torch.nn import functional as F
 
-from .base import FlowLayer
+from .base import FlowLayer, nll_normal
 
 
 class Squeeze(FlowLayer):
@@ -88,6 +88,61 @@ class Unsqueeze(Squeeze):
         x, _ = super().forward(z)
 
         return x
+
+
+class ChannelwiseSplit(FlowLayer):
+    """Channel-wise split layer.
+
+    Splits z -> z', h' for channel-wise.
+
+    ref) https://github.com/openai/glow/blob/master/model.py#L545
+
+    Args:
+        in_channels (int): Number of input channels.
+    """
+
+    def __init__(self, in_channels: int):
+        super().__init__()
+
+        self.conv = nn.Conv2d(in_channels // 2, in_channels, 3, padding=1)
+        self.conv.weight.data.zero_()
+        self.conv.bias.data.zero_()
+
+    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
+        """Forward propagation z = f(x) with log-determinant Jacobian.
+
+        Args:
+            x (torch.Tensor): Observations, size `(b, c, h, w)`.
+
+        Returns:
+            z (torch.Tensor): Encoded latents, size `(b, c//2, h, w)`.
+            logdet (torch.Tensor): Log determinant Jacobian.
+        """
+
+        z1, z2 = torch.chunk(x, 2, dim=1)
+        mu, logvar = torch.chunk(self.conv(z1), 2, dim=1)
+
+        # Loss NLL
+        logdet = nll_normal(z2, mu, F.softplus(logvar))
+        logdet = logdet.sum()
+
+        return z1, logdet
+
+    def inverse(self, z: Tensor) -> Tensor:
+        """Inverse propagation x = f^{-1}(z).
+
+        Args:
+            z (torch.Tensor): latents, size `(b, c, h, w)`.
+
+        Returns:
+            x (torch.Tensor): Decoded Observations, size `(b, c*2, h, w)`.
+        """
+
+        mu, logvar = torch.chunk(self.conv(z), 2, dim=1)
+        z2 = mu + F.softplus(0.5 * logvar) * torch.randn_like(logvar)
+        z = torch.cat([z, z2], dim=1)
+
+        return z
 
 
 class Preprocess(FlowLayer):
