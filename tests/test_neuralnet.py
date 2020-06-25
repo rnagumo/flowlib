@@ -6,10 +6,10 @@ import torch
 import flowlib
 
 
-class TestResNet(unittest.TestCase):
+class TestResidualBlock(unittest.TestCase):
 
     def setUp(self):
-        self.model = flowlib.ResNet(3, 10, 3, 2)
+        self.model = flowlib.ResidualBlock(3)
 
     def test_forward(self):
         x = torch.randn(4, 3, 8, 8)
