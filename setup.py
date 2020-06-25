@@ -7,6 +7,7 @@ install_requires = [
     "torchvision==0.6.1",
     "tqdm==4.46.1",
     "tensorboardX==2.0",
+    "matplotlib==3.2.2",
 ]
 
 
