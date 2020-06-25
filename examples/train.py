@@ -46,13 +46,13 @@ def main():
     # 2. Training
     # -------------------------------------------------------------------------
 
-    # GQN model
+    # Model
     model_dict = {
         "glow": flowlib.Glow,
     }
     model = model_dict[args.model](**config[f"{args.model}_params"])
 
-    # Trainer
+    # Params
     params = {
         "logdir": str(logdir),
         "gpus": gpus,
@@ -61,6 +61,7 @@ def main():
     params.update(config)
     params.update(vars(args))
 
+    # Run trainer
     trainer = Trainer(model, params)
     trainer.run()
 
