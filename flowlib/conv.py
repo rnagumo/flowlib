@@ -84,20 +84,20 @@ class InvertibleConvLU(FlowLayer):
         # LU decomposition
         a_lu, pivots = weight.lu()
         p, l, u = torch.lu_unpack(a_lu, pivots)
-        self.p_mat = nn.Parameter(p)
+        self.register_buffer("p_mat", p)
         self.l_mat = nn.Parameter(l)
-        self.u_mat = u
+        self.u_mat = nn.Parameter(u)
 
         # Mask
-        self.l_mask = torch.tril(torch.ones_like(weight), -1)
+        self.register_buffer("l_mask", torch.tril(torch.ones_like(weight), -1))
         self.u_mask = self.l_mask.t().clone()
 
         # Sign
         s = torch.diag(u)
-        self.s_sign = torch.sign(s)
+        self.register_buffer("s_sign", torch.sign(s))
         self.s_log = nn.Parameter(s.abs().log())
 
-        self.i_mat = torch.eye(in_channels)
+        self.register_buffer("i_mat", torch.eye(in_channels))
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         """Forward propagation z = f(x) with log-determinant Jacobian.
