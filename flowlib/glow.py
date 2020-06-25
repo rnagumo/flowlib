@@ -14,7 +14,7 @@ import torch
 from torch import Tensor, nn
 
 from .base import FlowModel
-from .conv import InvertibleConv, InvertibleConvLU
+from .conv import InvertibleConv
 from .coupling import AffineCoupling
 from .neuralnet import ResNet
 from .normalization import ActNorm2d
@@ -72,7 +72,7 @@ class Glow(FlowModel):
         for _ in range(3):
             flow_list += [
                 ActNorm2d(in_channels * 4),
-                InvertibleConvLU(in_channels * 4),
+                InvertibleConv(in_channels * 4),
                 AffineCoupling(
                     ScaleTranslateNet(in_channels * 4, mid_channels * 2),
                     mask_type="channel_wise", inverse_mask=False),
