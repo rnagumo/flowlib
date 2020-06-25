@@ -90,7 +90,7 @@ class InvertibleConvLU(FlowLayer):
 
         # Mask
         self.register_buffer("l_mask", torch.tril(torch.ones_like(weight), -1))
-        self.u_mask = self.l_mask.t().clone()
+        self.register_buffer("u_mask", self.l_mask.t().clone())
 
         # Sign
         s = torch.diag(u)
