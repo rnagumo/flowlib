@@ -16,10 +16,10 @@ class FlowLayer(nn.Module):
         """Forward propagation z = f(x) with log-determinant Jacobian.
 
         Args:
-            x (torch.Tensor): Observations, size `(batch, *)`.
+            x (torch.Tensor): Observations, size `(b, c, h, w)`.
 
         Returns:
-            z (torch.Tensor): Encoded latents, size `(batch, *)`.
+            z (torch.Tensor): Encoded latents, size `(b, c, h, w)`.
             logdet (torch.Tensor): Log determinant Jacobian.
         """
 
@@ -29,10 +29,10 @@ class FlowLayer(nn.Module):
         """Inverse propagation x = f^{-1}(z).
 
         Args:
-            z (torch.Tensor): latents, size `(batch, *)`.
+            z (torch.Tensor): latents, size `(b, c, h, w)`.
 
         Returns:
-            x (torch.Tensor): Decoded Observations, size `(batch, *)`.
+            x (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
         """
 
         raise NotImplementedError
@@ -62,10 +62,10 @@ class FlowModel(nn.Module):
         """Forward propagation z = f(x).
 
         Args:
-            x (torch.Tensor): Observations, size `(batch, *)`.
+            x (torch.Tensor): Observations, size `(b, c, h, w)`.
 
         Returns:
-            z (torch.Tensor): Encoded latents, size `(batch, *)`.
+            z (torch.Tensor): Encoded latents, size `(b, c, h, w)`.
         """
 
         z, _ = self.inference(x)
@@ -76,7 +76,7 @@ class FlowModel(nn.Module):
         """Loss function.
 
         Args:
-            x (torch.Tensor): Observations, size `(batch, *)`.
+            x (torch.Tensor): Observations, size `(b, c, h, w)`.
 
         Returns:
             loss_dict (dict of [str, torch.Tensor]): Calculated loss.
@@ -93,10 +93,10 @@ class FlowModel(nn.Module):
         """Inferences latents and calculates loss.
 
         Args:
-            x (torch.Tensor): Observations, size `(batch, *)`.
+            x (torch.Tensor): Observations, size `(b, c, h, w)`.
 
         Returns:
-            z (torch.Tensor): Encoded latents, size `(batch, *)`.
+            z (torch.Tensor): Encoded latents, size `(b, c, h, w)`.
             logdet (torch.Tensor): Log determinant Jacobian.
         """
 
@@ -112,10 +112,10 @@ class FlowModel(nn.Module):
         """Inverse propagation x = f^{-1}(z).
 
         Args:
-            z (torch.Tensor): latents, size `(batch, *)`.
+            z (torch.Tensor): latents, size `(b, c, h, w)`.
 
         Returns:
-            x (torch.Tensor): Decoded Observations, size `(batch, *)`.
+            x (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
         """
 
         for flow in self.flow_list[::-1]:
@@ -127,7 +127,7 @@ class FlowModel(nn.Module):
         """Samples from prior.
 
         Returns:
-            x (torch.Tensor): Decoded Observations, size `(batch, *)`.
+            x (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
         """
 
         var = torch.cat([self._prior_var.unsqueeze(0)] * batch)

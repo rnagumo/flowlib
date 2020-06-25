@@ -37,10 +37,10 @@ class Conv2dZeros(nn.Module):
         """Forward convolution.
 
         Args:
-            x (torch.Tensor): Input tensor, size `(batch, *)`.
+            x (torch.Tensor): Input tensor, size `(b, c, h, w)`.
 
         Returns:
-            x (torch.Tensor): Convolutioned tensor, size `(batch, *)`.
+            x (torch.Tensor): Convolutioned tensor, size `(b, c, h, w)`.
         """
 
         return self.conv(x) * (self.logs * self.log_scale).exp()
@@ -71,10 +71,10 @@ class ResidualBlock(nn.Module):
         """Forward.
 
         Args:
-            x (torch.Tensor): Input tensor, size `(batch, *)`.
+            x (torch.Tensor): Input tensor, size `(b, c, h, w)`.
 
         Returns:
-            x (torch.Tensor): Convolutioned tensor, size `(batch, *)`.
+            x (torch.Tensor): Convolutioned tensor, size `(b, c, h, w)`.
         """
 
         return x + self.conv(x)

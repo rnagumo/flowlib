@@ -33,10 +33,10 @@ class InvertibleConv(FlowLayer):
         """Forward propagation z = f(x) with log-determinant Jacobian.
 
         Args:
-            x (torch.Tensor): Observations, size `(batch, *)`.
+            x (torch.Tensor): Observations, size `(b, c, h, w)`.
 
         Returns:
-            z (torch.Tensor): Encoded latents, size `(batch, *)`.
+            z (torch.Tensor): Encoded latents, size `(b, c, h, w)`.
             logdet (torch.Tensor): Log determinant Jacobian.
         """
 
@@ -55,10 +55,10 @@ class InvertibleConv(FlowLayer):
         """Inverse propagation x = f^{-1}(z).
 
         Args:
-            z (torch.Tensor): latents, size `(batch, *)`.
+            z (torch.Tensor): latents, size `(b, c, h, w)`.
 
         Returns:
-            x (torch.Tensor): Decoded Observations, size `(batch, *)`.
+            x (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
         """
 
         weight = torch.inverse(self.weight.double()).float()
@@ -103,10 +103,10 @@ class InvertibleConvLU(FlowLayer):
         """Forward propagation z = f(x) with log-determinant Jacobian.
 
         Args:
-            x (torch.Tensor): Observations, size `(batch, *)`.
+            x (torch.Tensor): Observations, size `(b, c, h, w)`.
 
         Returns:
-            z (torch.Tensor): Encoded latents, size `(batch, *)`.
+            z (torch.Tensor): Encoded latents, size `(b, c, h, w)`.
             logdet (torch.Tensor): Log determinant Jacobian.
         """
 
@@ -126,10 +126,10 @@ class InvertibleConvLU(FlowLayer):
         """Inverse propagation x = f^{-1}(z).
 
         Args:
-            z (torch.Tensor): latents, size `(batch, *)`.
+            z (torch.Tensor): latents, size `(b, c, h, w)`.
 
         Returns:
-            x (torch.Tensor): Decoded Observations, size `(batch, *)`.
+            x (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
         """
 
         l = self.l_mat * self.l_mask + self.i_mat
