@@ -83,10 +83,11 @@ class FlowModel(nn.Module):
         """
 
         z, logdet = self.inference(x)
-        log_prob = nll_normal(z, self._prior_mu, self._prior_var)
-        loss = (log_prob + logdet).mean()
+        log_prob = nll_normal(z, self._prior_mu, self._prior_var, reduce=False)
+        loss = (log_prob.sum(dim=[1, 2, 3]) + logdet).mean()
 
-        return {"loss": loss, "log_prob": log_prob.mean(), "logdet": logdet}
+        return {"loss": loss, "log_prob": log_prob.mean(),
+                "logdet": logdet.mean()}
 
     def inference(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         """Inferences latents and calculates loss.
@@ -99,7 +100,7 @@ class FlowModel(nn.Module):
             logdet (torch.Tensor): Log determinant Jacobian.
         """
 
-        logdet = x.new_zeros(())
+        logdet = x.new_zeros((x.size(0),))
 
         for flow in self.flow_list:
             x, _logdet = flow(x)

@@ -16,7 +16,7 @@ class TestSqueeze(unittest.TestCase):
         z, logdet = self.model(x)
 
         self.assertTupleEqual(z.size(), (1, 4, 2, 2))
-        self.assertTupleEqual(logdet.size(), ())
+        self.assertTupleEqual(logdet.size(), (1,))
 
         z_true = torch.tensor([[
             [[1, 3], [9, 11]],
@@ -55,7 +55,7 @@ class TestUnsqueeze(unittest.TestCase):
         z, logdet = self.model(x)
 
         self.assertTupleEqual(z.size(), (1, 1, 4, 4))
-        self.assertTupleEqual(logdet.size(), ())
+        self.assertTupleEqual(logdet.size(), (1,))
 
         self.assertTrue((z == torch.arange(1, 17).view(1, 1, 4, 4)).all())
 
@@ -86,7 +86,7 @@ class TestChannelwiseSplit(unittest.TestCase):
 
         self.assertTupleEqual(z.size(), (4, 2, 8, 8))
         self.assertFalse(torch.isnan(z).any())
-        self.assertTupleEqual(logdet.size(), ())
+        self.assertTupleEqual(logdet.size(), (4,))
 
     def test_inverse(self):
         z = torch.randn(4, 2, 8, 8)
@@ -106,7 +106,7 @@ class TestPreprocess(unittest.TestCase):
         z, logdet = self.model(x)
 
         self.assertTupleEqual(z.size(), x.size())
-        self.assertTupleEqual(logdet.size(), ())
+        self.assertTupleEqual(logdet.size(), (4,))
         self.assertFalse(torch.isnan(z).any())
 
     def test_inverse(self):

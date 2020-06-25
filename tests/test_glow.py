@@ -12,14 +12,14 @@ class TestGlow(unittest.TestCase):
         self.model = flowlib.Glow()
 
     def test_init(self):
-        self.assertTupleEqual(self.model._prior_mu.size(), (3, 32, 32))
-        self.assertTupleEqual(self.model._prior_var.size(), (3, 32, 32))
+        self.assertTupleEqual(self.model._prior_mu.size(), (48, 4, 4))
+        self.assertTupleEqual(self.model._prior_var.size(), (48, 4, 4))
 
     def test_forward(self):
         x = torch.rand(2, 3, 32, 32)
         z = self.model(x)
 
-        self.assertTupleEqual(z.size(), x.size())
+        self.assertTupleEqual(z.size(), (2, 48, 4, 4))
         self.assertFalse(torch.isnan(z).any())
 
     def test_loss_func(self):
@@ -28,20 +28,22 @@ class TestGlow(unittest.TestCase):
 
         self.assertIsInstance(loss_dict, dict)
         self.assertGreater(loss_dict["loss"], 0)
+        self.assertGreater(loss_dict["log_prob"], 0)
+        self.assertGreater(loss_dict["logdet"], 0)
 
     def test_inference(self):
         x = torch.rand(2, 3, 32, 32)
         z, logdet = self.model.inference(x)
 
-        self.assertTupleEqual(z.size(), x.size())
+        self.assertTupleEqual(z.size(), (2, 48, 4, 4))
         self.assertFalse(torch.isnan(z).any())
-        self.assertTupleEqual(logdet.size(), ())
+        self.assertTupleEqual(logdet.size(), (2,))
 
     def test_inverse(self):
-        z = torch.rand(2, 3, 32, 32)
+        z = torch.randn(2, 48, 4, 4)
         x = self.model.inverse(z)
 
-        self.assertTupleEqual(x.size(), z.size())
+        self.assertTupleEqual(x.size(), (2, 3, 32, 32))
         self.assertFalse(torch.isnan(x).any())
 
     def test_sample(self):
@@ -49,14 +51,14 @@ class TestGlow(unittest.TestCase):
         self.assertTupleEqual(x.size(), (5, 3, 32, 32))
         self.assertFalse(torch.isnan(x).any())
 
-    def test_other_shape(self):
-        model = flowlib.Glow(3, 64, image_size=64)
+    def test_inference_with_other_shape(self):
+        model = flowlib.Glow(3, 64, image_size=64, depth=12, level=2)
         x = torch.rand(2, 3, 64, 64)
         z, logdet = model.inference(x)
 
-        self.assertTupleEqual(z.size(), x.size())
+        self.assertTupleEqual(z.size(), (2, 24, 16, 16))
         self.assertFalse(torch.isnan(z).any())
-        self.assertTupleEqual(logdet.size(), ())
+        self.assertTupleEqual(logdet.size(), (2,))
 
 
 if __name__ == "__main__":

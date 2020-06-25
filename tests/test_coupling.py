@@ -24,7 +24,7 @@ class TestAffineCoupling(unittest.TestCase):
 
         self.assertTupleEqual(z.size(), x.size())
         self.assertFalse(torch.isnan(z).any())
-        self.assertTupleEqual(logdet.size(), ())
+        self.assertTupleEqual(logdet.size(), (4,))
 
         # Inverse
         z = torch.randn(4, 3, 8, 8)

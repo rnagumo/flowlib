@@ -55,7 +55,7 @@ class AffineCoupling(FlowLayer):
         z = (x_a * log_s.exp() + t) + x_b
 
         # Log determinant
-        logdet = log_s.sum()
+        logdet = log_s.sum(dim=[1, 2, 3])
 
         return z, logdet
 

@@ -47,7 +47,7 @@ class InvertibleConv(FlowLayer):
         # Log determinant
         *_, h, w = x.size()
         _, logdet = torch.slogdet(self.weight)
-        logdet = logdet * (h * w)
+        logdet = logdet.unsqueeze(0) * (h * w)
 
         return z, logdet
 
@@ -118,7 +118,7 @@ class InvertibleConvLU(FlowLayer):
 
         # Log determinant
         *_, h, w = x.size()
-        logdet = self.s_log.sum() * h * w
+        logdet = self.s_log.sum().unsqueeze(0) * h * w
 
         return z, logdet
 

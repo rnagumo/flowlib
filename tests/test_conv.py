@@ -17,7 +17,7 @@ class TestInvertibleConv(unittest.TestCase):
 
         self.assertTupleEqual(z.size(), x.size())
         self.assertFalse(torch.isnan(z).any())
-        self.assertTupleEqual(logdet.size(), ())
+        self.assertTupleEqual(logdet.size(), (1,))
 
     def test_inverse(self):
         z = torch.randn(4, 3, 8, 8)
@@ -38,7 +38,7 @@ class TestInvertibleConvLU(unittest.TestCase):
 
         self.assertTupleEqual(z.size(), x.size())
         self.assertFalse(torch.isnan(z).any())
-        self.assertTupleEqual(logdet.size(), ())
+        self.assertTupleEqual(logdet.size(), (1,))
 
     def test_inverse(self):
         z = torch.randn(4, 3, 8, 8)

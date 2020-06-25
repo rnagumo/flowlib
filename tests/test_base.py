@@ -10,7 +10,7 @@ import flowlib
 # Temporal layer class
 class TempLayer(nn.Module):
     def forward(self, x):
-        return x, x.abs().mean()
+        return x, x.abs().mean().unsqueeze(0)
 
     def inverse(self, z):
         return z
@@ -25,22 +25,22 @@ class TestFlowModel(unittest.TestCase):
         ])
 
     def test_init(self):
-        model = flowlib.FlowModel(in_size=(2, 3, 4))
+        model = flowlib.FlowModel(in_size=(3, 4, 4))
         model.flow_list = nn.ModuleList([
             TempLayer(), TempLayer()
         ])
 
-        self.assertTupleEqual(model._prior_mu.size(), (2, 3, 4))
-        self.assertTupleEqual(model._prior_var.size(), (2, 3, 4))
+        self.assertTupleEqual(model._prior_mu.size(), (3, 4, 4))
+        self.assertTupleEqual(model._prior_var.size(), (3, 4, 4))
 
     def test_forward(self):
-        x = torch.randn(2, 4)
+        x = torch.randn(2, 3, 4, 4)
         z = self.model(x)
 
         self.assertTupleEqual(z.size(), x.size())
 
     def test_loss_func(self):
-        x = torch.randn(2, 4)
+        x = torch.randn(2, 3, 4, 4)
         loss_dict = self.model.loss_func(x)
 
         self.assertIsInstance(loss_dict, dict)
@@ -49,26 +49,26 @@ class TestFlowModel(unittest.TestCase):
         self.assertGreater(loss_dict["logdet"], 0)
 
     def test_inference(self):
-        x = torch.randn(2, 4)
+        x = torch.randn(2, 3, 4, 4)
         z, logdet = self.model.inference(x)
 
         self.assertTupleEqual(z.size(), x.size())
-        self.assertTupleEqual(logdet.size(), ())
+        self.assertTupleEqual(logdet.size(), (2,))
 
     def test_inverse(self):
-        z = torch.randn(2, 3)
+        z = torch.randn(2, 3, 4, 4)
         x = self.model.inverse(z)
 
         self.assertTupleEqual(x.size(), z.size())
 
     def test_sample(self):
-        model = flowlib.FlowModel(in_size=(2, 3, 4))
+        model = flowlib.FlowModel(in_size=(3, 4, 4))
         model.flow_list = nn.ModuleList([
             TempLayer(), TempLayer()
         ])
 
         x = model.sample(5)
-        self.assertTupleEqual(x.size(), (5, 2, 3, 4))
+        self.assertTupleEqual(x.size(), (5, 3, 4, 4))
 
 
 if __name__ == "__main__":

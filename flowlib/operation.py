@@ -37,7 +37,7 @@ class Squeeze(FlowLayer):
         x = x.contiguous().view(-1, height // 2, width // 2, channels * 4)
         z = x.permute(0, 3, 1, 2)
 
-        return z, z.new_zeros(())
+        return z, z.new_zeros((1,))
 
     def inverse(self, z: Tensor) -> Tensor:
         """Inverse propagation x = f^{-1}(z).
@@ -74,7 +74,7 @@ class Unsqueeze(Squeeze):
             logdet (torch.Tensor): Log determinant Jacobian.
         """
 
-        return super().inverse(x), x.new_zeros(())
+        return super().inverse(x), x.new_zeros((1,))
 
     def inverse(self, z: Tensor) -> Tensor:
         """Inverse propagation x = f^{-1}(z).
@@ -122,8 +122,8 @@ class ChannelwiseSplit(FlowLayer):
         mu, logvar = torch.chunk(self.conv(z1), 2, dim=1)
 
         # Loss NLL
-        logdet = nll_normal(z2, mu, F.softplus(logvar))
-        logdet = logdet.sum()
+        logdet = nll_normal(z2, mu, F.softplus(logvar), reduce=False)
+        logdet = logdet.sum(dim=[1, 2, 3])
 
         return z1, logdet
 
@@ -179,7 +179,7 @@ class Preprocess(FlowLayer):
         logdet = (
             F.softplus(z) + F.softplus(-z)
             - F.softplus(self.constraint.log() - (1 - self.constraint).log()))
-        logdet = logdet.sum()
+        logdet = logdet.sum(dim=[1, 2, 3])
 
         return z, logdet
 

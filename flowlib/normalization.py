@@ -49,7 +49,7 @@ class ActNorm2d(FlowLayer):
 
         # Compute Jacobian
         *_, h, w = x.size()
-        logdet = self.weight.sum() * h * w
+        logdet = self.weight.sum().unsqueeze(0) * h * w
 
         return x, logdet
 
