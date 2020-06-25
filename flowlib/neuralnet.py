@@ -5,6 +5,7 @@ ref)
 https://github.com/masa-su/pixyz/blob/master/pixyz/layers/resnet.py
 """
 
+import torch
 from torch import Tensor, nn
 
 
@@ -17,16 +18,20 @@ class Conv2dZeros(nn.Module):
         kernel_size (int): Kernel size.
         padding (int): Padding size.
         bias (bool, optional): Boolean flag for bias in conv.
+        log_scale (float, optional): Log scale for output.
     """
 
     def __init__(self, in_channels: int, out_channels: int, kernel_size: int,
-                 padding: int, bias: bool = True):
+                 padding: int, bias: bool = True, log_scale: float = 3.0):
         super().__init__()
 
         self.conv = nn.Conv2d(
             in_channels, out_channels, kernel_size, padding=padding, bias=bias)
         self.conv.weight.data.zero_()
         self.conv.bias.data.zero_()
+
+        self.log_scale = log_scale
+        self.logs = nn.Parameter(torch.zeros(out_channels, 1, 1))
 
     def forward(self, x: Tensor) -> Tensor:
         """Forward convolution.
@@ -38,7 +43,7 @@ class Conv2dZeros(nn.Module):
             x (torch.Tensor): Convolutioned tensor, size `(batch, *)`.
         """
 
-        return self.conv(x)
+        return self.conv(x) * (self.logs * self.log_scale).exp()
 
 
 class ResidualBlock(nn.Module):

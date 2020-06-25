@@ -12,6 +12,7 @@ from torch import Tensor, nn
 from torch.nn import functional as F
 
 from .base import FlowLayer, nll_normal
+from .neuralnet import Conv2dZeros
 
 
 class Squeeze(FlowLayer):
@@ -104,9 +105,7 @@ class ChannelwiseSplit(FlowLayer):
     def __init__(self, in_channels: int):
         super().__init__()
 
-        self.conv = nn.Conv2d(in_channels // 2, in_channels, 3, padding=1)
-        self.conv.weight.data.zero_()
-        self.conv.bias.data.zero_()
+        self.conv = Conv2dZeros(in_channels // 2, in_channels, 3, padding=1)
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         """Forward propagation z = f(x) with log-determinant Jacobian.
