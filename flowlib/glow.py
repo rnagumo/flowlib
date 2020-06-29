@@ -8,12 +8,12 @@ ref)
 https://github.com/masa-su/pixyz/blob/master/examples/glow.ipynb
 """
 
-from typing import Tuple
+from typing import Tuple, List
 
 import torch
 from torch import Tensor, nn
 
-from .base import FlowModel
+from .base import FlowLayer, FlowModel
 from .conv import InvertibleConv
 from .coupling import AffineCoupling
 from .neuralnet import Conv2dZeros
@@ -74,9 +74,11 @@ class Glow(FlowModel):
         super().__init__((in_channels * 2 ** (level + 1),
                           image_size // 2 ** level, image_size // 2 ** level))
 
-        flow_list = [Preprocess()]
-
+        # Current channel at each level
         current_channels = in_channels
+
+        # Input layer
+        flow_list: List[FlowLayer] = [Preprocess()]
 
         # Main blocks
         for i in range(level):
