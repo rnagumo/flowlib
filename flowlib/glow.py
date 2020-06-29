@@ -53,7 +53,6 @@ class ScaleTranslateNet(nn.Module):
 
         s_t = self.conv(x)
         log_s, t = torch.chunk(s_t, 2, dim=1)
-        log_s = torch.tanh(log_s)
 
         return log_s, t
 
