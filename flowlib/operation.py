@@ -8,7 +8,7 @@ https://github.com/masa-su/pixyz/blob/master/pixyz/flows/operations.py
 from typing import Tuple
 
 import torch
-from torch import Tensor, nn
+from torch import Tensor
 from torch.nn import functional as F
 
 from .base import FlowLayer, nll_normal
