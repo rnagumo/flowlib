@@ -121,8 +121,8 @@ class ChannelwiseSplit(FlowLayer):
         z1, z2 = torch.chunk(x, 2, dim=1)
         mu, logvar = torch.chunk(self.conv(z1), 2, dim=1)
 
-        # Loss NLL
-        logdet = nll_normal(z2, mu, F.softplus(logvar), reduce=False)
+        # Log likelihood
+        logdet = -nll_normal(z2, mu, F.softplus(logvar), reduce=False)
         logdet = logdet.sum(dim=[1, 2, 3])
 
         return z1, logdet
