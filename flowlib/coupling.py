@@ -139,8 +139,7 @@ def channel_wise_mask(channel: int, inverse: bool = False) -> Tensor:
 
     Args:
         channel (int): Number of channels.
-
-    inverse (bool, optional): If `True`, mask pattern is reversed.
+        inverse (bool, optional): If `True`, mask pattern is reversed.
 
     Returns:
         mask (torch.Tensor): Generated mask pattern, size `(channel,)`.
