@@ -26,7 +26,7 @@ class InvertibleConv(FlowLayer):
     def __init__(self, in_channels: int):
         super().__init__()
 
-        self.weight = nn.Parameter(torch.empty(in_channels, in_channels))
+        self.weight = nn.Parameter(torch.randn(in_channels, in_channels))
         nn.init.orthogonal_(self.weight)
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
@@ -78,7 +78,7 @@ class InvertibleConvLU(FlowLayer):
     def __init__(self, in_channels: int):
         super().__init__()
 
-        weight = torch.empty(in_channels, in_channels)
+        weight = torch.randn(in_channels, in_channels)
         nn.init.orthogonal_(weight)
 
         # LU decomposition
