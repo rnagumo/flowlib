@@ -20,14 +20,16 @@ class ActNorm2d(FlowLayer):
 
     Args:
         in_channels (int): Channel size of input data.
+        scale (float, optional): Scaling factor.
     """
 
-    def __init__(self, in_channels: int):
+    def __init__(self, in_channels: int, scale: float = 1.0):
         super().__init__()
 
         in_size = (1, in_channels, 1, 1)
         self.weight = nn.Parameter(torch.ones(in_size))
         self.bias = nn.Parameter(torch.zeros(in_size))
+        self.scale = scale
         self.initialized = False
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
@@ -51,7 +53,7 @@ class ActNorm2d(FlowLayer):
         *_, h, w = x.size()
         logdet = self.weight.sum().unsqueeze(0) * h * w
 
-        return x, logdet
+        return z, logdet
 
     def inverse(self, z: Tensor) -> Tensor:
         """Inverse propagation x = f^{-1}(z).
@@ -85,8 +87,9 @@ class ActNorm2d(FlowLayer):
         with torch.no_grad():
             # Channel-wise mean and var
             bias = -torch.mean(x.clone(), dim=[0, 2, 3], keepdim=True)
-            var = torch.mean(x.clone() ** 2, dim=[0, 2, 3], keepdim=True)
-            weight = torch.log(1.0 / (torch.sqrt(var) + eps))
+            var = torch.mean(
+                (x.clone() + bias) ** 2, dim=[0, 2, 3], keepdim=True)
+            weight = torch.log(self.scale / (torch.sqrt(var) + eps))
             self.weight.data.copy_(weight)
             self.bias.data.copy_(bias)
             self.initialized = True
