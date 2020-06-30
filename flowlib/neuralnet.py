@@ -62,21 +62,22 @@ class ConvBlock(nn.Module):
 
     Args:
         in_channels (int): Number of channels in input image.
-        mid_channels (int): Number of channels in mid image.
+        hidden_channels (int): Number of channels in mid image.
         weight_std (float, optional): Std value for weight initialization.
     """
 
-    def __init__(self, in_channels: int, mid_channels: int,
+    def __init__(self, in_channels: int, hidden_channels: int,
                  weight_std: float = 0.05):
         super().__init__()
 
         self.conv1 = nn.Conv2d(
-            in_channels, mid_channels, 3, padding=1, bias=False)
-        self.conv2 = nn.Conv2d(mid_channels, mid_channels, 1, bias=False)
-        self.conv3 = Conv2dZeros(mid_channels, in_channels * 2, 3, padding=1)
+            in_channels, hidden_channels, 3, padding=1, bias=False)
+        self.conv2 = nn.Conv2d(hidden_channels, hidden_channels, 1, bias=False)
+        self.conv3 = Conv2dZeros(
+            hidden_channels, in_channels * 2, 3, padding=1)
 
-        self.actnorm1 = ActNorm2d(mid_channels)
-        self.actnorm2 = ActNorm2d(mid_channels)
+        self.actnorm1 = ActNorm2d(hidden_channels)
+        self.actnorm2 = ActNorm2d(hidden_channels)
 
         # Initialize 1st and 2nd conv layer weight as normal
         self.conv1.weight.data.normal_(mean=0.0, std=weight_std)

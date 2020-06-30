@@ -25,13 +25,13 @@ class Glow(FlowModel):
 
     Args:
         in_channels (int, optional): Number of channels in input image.
-        mid_channels (int, optional): Number of channels in mid image.
+        hidden_channels (int, optional): Number of channels in mid image.
         image_size (int, optional): Size of input image.
         depth (int, optional): Depth of flow `K`.
         level (int, optional): Number of levels `L`.
     """
 
-    def __init__(self, in_channels: int = 3, mid_channels: int = 512,
+    def __init__(self, in_channels: int = 3, hidden_channels: int = 512,
                  image_size: int = 32, depth: int = 32, level: int = 3):
         super().__init__((in_channels * 2 ** (level + 1),
                           image_size // 2 ** level, image_size // 2 ** level))
@@ -55,7 +55,7 @@ class Glow(FlowModel):
                     ActNorm2d(current_channels),
                     InvertibleConv(current_channels),
                     AffineCoupling(
-                        ConvBlock(current_channels, mid_channels),
+                        ConvBlock(current_channels, hidden_channels),
                         mask_type="channel_wise", inverse_mask=False),
                 ]
 
