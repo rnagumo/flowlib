@@ -18,21 +18,12 @@ class AffineCoupling(FlowLayer):
 
     Args:
         scale_trans_net (nn.Module): Function for scale and transition.
-        mask_type (str, optional): Mask type (checkerboard or channel_wise).
-        inverse_mask (bool, optional): If `True`, reverse mask.
     """
 
-    def __init__(self, scale_trans_net: nn.Module,
-                 mask_type: str = "channel_wise", inverse_mask: bool = False):
+    def __init__(self, scale_trans_net: nn.Module):
         super().__init__()
 
-        if mask_type not in ["checkerboard", "channel_wise"]:
-            raise ValueError(
-                "Mask type should be 'checkerboard' or 'channel_wise'")
-
         self.scale_trans_net = scale_trans_net
-        self.mask_type = mask_type
-        self.inverse_mask = inverse_mask
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         """Forward propagation z = f(x) with log-determinant Jacobian.
@@ -45,17 +36,20 @@ class AffineCoupling(FlowLayer):
             logdet (torch.Tensor): Log determinant Jacobian.
         """
 
-        mask = self._generate_mask(x)
-        x_a = x * (1 - mask)
-        x_b = x * mask
+        # Check channel
+        channels = x.size(1)
+        if channels % 2 != 0:
+            raise ValueError("Channel number should be even.")
+
+        x_a = x[:, :channels // 2]
+        x_b = x[:, channels // 2:]
 
         log_s, t = self.scale_trans_net(x_b)
-        log_s = torch.sigmoid(log_s + 2) * (1 - mask)
-        t = t * (1 - mask)
-        z = (x_a * log_s.exp() + t) + x_b
+        scale = torch.sigmoid(log_s + 2)  # Sigmoid instead of exp
+        z = torch.cat([(x_a * scale + t), x_b], dim=1)
 
         # Log determinant
-        logdet = log_s.sum(dim=[1, 2, 3])
+        logdet = scale.log().sum(dim=[1, 2, 3])
 
         return z, logdet
 
@@ -69,43 +63,19 @@ class AffineCoupling(FlowLayer):
             x (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
         """
 
-        mask = self._generate_mask(z)
-        z_a = z * (1 - mask)
-        z_b = z * mask
+        # Checks channel
+        channels = z.size(1)
+        if channels % 2 != 0:
+            raise ValueError("Channel number should be even.")
+
+        z_a = z[:, :channels // 2]
+        z_b = z[:, channels // 2:]
 
         log_s, t = self.scale_trans_net(z_b)
-        log_s = torch.sigmoid(log_s + 2) * (1 - mask)
-        t = t * (1 - mask)
-        x = (z_a - t) * (-log_s).exp() + z_b
+        scale = torch.sigmoid(log_s + 2)  # Sigmoid instead of exp
+        x = torch.cat([(z_a - t) * (-scale.log()).exp(), z_b], dim=1)
 
         return x
-
-    def _generate_mask(self, x: Tensor) -> Tensor:
-        """Generates mask given inputs.
-
-        Args:
-            x (torch.Tensor): Input tensor.
-
-        Returns:
-            mask (torch.Tensor): Generated mask.
-        """
-
-        if x.dim() == 4:
-            _, channel, height, width = x.size()
-            if self.mask_type == "checkerboard":
-                mask = checkerboard_mask(height, width, self.inverse_mask)
-                mask = mask.view(1, 1, height, width)
-            else:
-                mask = channel_wise_mask(channel, self.inverse_mask)
-                mask = mask.view(1, channel, 1, 1)
-        elif x.dim() == 2 and self.mask_type == "channel_wise":
-            _, n_features = x.size()
-            mask = channel_wise_mask(n_features, self.inverse_mask)
-            mask = mask.view(1, n_features)
-        else:
-            raise ValueError("Invalid dimension and mask type")
-
-        return mask.to(x.device)
 
 
 class MaskedAffineCoupling(FlowLayer):
