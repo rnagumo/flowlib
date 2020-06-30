@@ -50,25 +50,25 @@ class Conv2dZeros(nn.Module):
         return self.conv(x) * (self.logs * self.log_scale).exp()
 
 
-class ResidualBlock(nn.Module):
-    """ResNet basic block.
+class ConvBlock(nn.Module):
+    """Convolutional basic block.
 
-    * 1 conv layer is added at first.
-    * Batch normalization is replaced with activation normalization.
-    * All convolution layers are initialized with zeros.
+    * 3 conv layers.
+    * Activation normalization after convolution layer.
+    * Weights of all convolution layers are initialized with zeros.
+    * Bias of the last layer is initialized with zeros.
 
     Args:
         in_channels (int): Number of channels in input image.
         mid_channels (int): Number of channels in mid image.
-        out_channels (int): Number of channels in output image.
     """
 
-    def __init__(self, in_channels: int, mid_channels: int, out_channels: int):
+    def __init__(self, in_channels: int, mid_channels: int):
         super().__init__()
 
         self.conv1 = nn.Conv2d(in_channels, mid_channels, 3, padding=1)
         self.conv2 = nn.Conv2d(mid_channels, mid_channels, 1)
-        self.conv3 = Conv2dZeros(mid_channels, out_channels, 3, padding=1)
+        self.conv3 = Conv2dZeros(mid_channels, in_channels * 2, 3, padding=1)
 
         self.actnorm1 = ActNorm2d(mid_channels)
         self.actnorm2 = ActNorm2d(mid_channels)
@@ -84,10 +84,8 @@ class ResidualBlock(nn.Module):
             x (torch.Tensor): Input tensor, size `(b, c, h, w)`.
 
         Returns:
-            x (torch.Tensor): Convolutioned tensor, size `(b, c, h, w)`.
+            x (torch.Tensor): Convolutioned tensor, size `(b, 2*c, h, w)`.
         """
-
-        skip = x
 
         x = self.conv1(x)
         x, _ = self.actnorm1(x)
@@ -99,4 +97,4 @@ class ResidualBlock(nn.Module):
 
         x = self.conv3(x)
 
-        return x + skip
+        return x

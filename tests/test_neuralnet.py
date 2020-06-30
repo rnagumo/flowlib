@@ -19,16 +19,16 @@ class TestConv2dZeros(unittest.TestCase):
         self.assertFalse(torch.isnan(z).any())
 
 
-class TestResidualBlock(unittest.TestCase):
+class TestConvBlock(unittest.TestCase):
 
     def setUp(self):
-        self.model = flowlib.ResidualBlock(3, 4, 3)
+        self.model = flowlib.ConvBlock(3, 4)
 
     def test_forward(self):
         x = torch.randn(4, 3, 8, 8)
         z = self.model(x)
 
-        self.assertTupleEqual(z.size(), x.size())
+        self.assertTupleEqual(z.size(), (4, 6, 8, 8))
         self.assertFalse(torch.isnan(z).any())
 
 
