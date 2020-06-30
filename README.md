@@ -25,3 +25,4 @@ Flow models in PyTroch
 * chaiyujin, glow-pytorch [GitHub](https://github.com/chaiyujin/glow-pytorch)
 * gpapamak, maf [GitHub](https://github.com/gpapamak/maf)
 * masa-su, pixyz, Glow (CIFAR 10) [GitHub](https://github.com/masa-su/pixyz/blob/master/examples/glow.ipynb), Real NVP (CIFAR10) [GitHub](https://github.com/masa-su/pixyz/blob/master/examples/real_nvp_cifar.ipynb)
+* pclucas14, pytorch-glow [GitHub](https://github.com/pclucas14/pytorch-glow)
