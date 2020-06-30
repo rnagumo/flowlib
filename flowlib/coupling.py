@@ -16,6 +16,13 @@ from .base import FlowLayer
 class AffineCoupling(FlowLayer):
     """Affine coupling layer.
 
+    ref) https://github.com/openai/glow/blob/master/model.py
+
+    Difference between original paper and official code.
+
+    * Squash function of log(s): exp -> sigmoid
+    * Affine coupling: s * x + t -> (x + t) * s
+
     Args:
         scale_trans_net (nn.Module): Function for scale and transition.
     """
@@ -45,8 +52,8 @@ class AffineCoupling(FlowLayer):
         x_b = x[:, channels // 2:]
 
         log_s, t = self.scale_trans_net(x_b)
-        scale = torch.sigmoid(log_s + 2)  # Sigmoid instead of exp
-        z = torch.cat([(x_a * scale + t), x_b], dim=1)
+        scale = torch.sigmoid(log_s + 2)
+        z = torch.cat([((x_a + t) * scale), x_b], dim=1)
 
         # Log determinant
         logdet = scale.log().sum(dim=[1, 2, 3])
@@ -72,8 +79,8 @@ class AffineCoupling(FlowLayer):
         z_b = z[:, channels // 2:]
 
         log_s, t = self.scale_trans_net(z_b)
-        scale = torch.sigmoid(log_s + 2)  # Sigmoid instead of exp
-        x = torch.cat([(z_a - t) * (-scale.log()).exp(), z_b], dim=1)
+        scale = torch.sigmoid(log_s + 2)
+        x = torch.cat([z_a / scale - t, z_b], dim=1)
 
         return x
 
