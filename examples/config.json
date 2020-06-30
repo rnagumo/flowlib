@@ -2,7 +2,9 @@
     "glow_params": {
         "in_channels": 3,
         "mid_channels": 64,
-        "image_size": 32
+        "image_size": 32,
+        "depth": 32,
+        "level": 3
     },
     "optimizer_params": {}
 }
