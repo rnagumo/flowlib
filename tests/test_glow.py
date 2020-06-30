@@ -40,6 +40,10 @@ class TestGlow(unittest.TestCase):
         self.assertTupleEqual(logdet.size(), (2,))
 
     def test_inverse(self):
+        # Initialize actnorm by forward step
+        x = torch.rand(2, 3, 32, 32)
+        self.model(x)
+
         z = torch.randn(2, 48, 4, 4)
         x = self.model.inverse(z)
 
@@ -47,6 +51,10 @@ class TestGlow(unittest.TestCase):
         self.assertFalse(torch.isnan(x).any())
 
     def test_sample(self):
+        # Initialize actnorm by forward step
+        x = torch.rand(2, 3, 32, 32)
+        self.model(x)
+
         x = self.model.sample(5)
         self.assertTupleEqual(x.size(), (5, 3, 32, 32))
         self.assertFalse(torch.isnan(x).any())
