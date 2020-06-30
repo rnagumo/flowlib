@@ -73,7 +73,7 @@ class ActNorm2d(FlowLayer):
 
         return x
 
-    def initialize_parameters(self, x: Tensor, eps: float = 1e-8) -> None:
+    def initialize_parameters(self, x: Tensor, eps: float = 1e-6) -> None:
         """Initializes parameters with first given data.
 
         Args:
