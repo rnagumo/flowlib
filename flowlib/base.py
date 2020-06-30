@@ -73,7 +73,7 @@ class FlowModel(nn.Module):
         return z
 
     def loss_func(self, x: Tensor) -> Dict[str, Tensor]:
-        """Loss function.
+        """Loss function: -log p(x).
 
         Args:
             x (torch.Tensor): Observations, size `(b, c, h, w)`.
@@ -82,9 +82,10 @@ class FlowModel(nn.Module):
             loss_dict (dict of [str, torch.Tensor]): Calculated loss.
         """
 
+        # Inference z = f(x)
         z, logdet = self.inference(x)
 
-        # Loss is -log p(x), so logdet should be negative
+        # Logdet is negative
         logdet = -logdet
 
         # NLL
