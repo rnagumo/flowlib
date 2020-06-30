@@ -31,11 +31,9 @@ class Squeeze(FlowLayer):
 
         _, channels, height, width = x.size()
 
-        x = x.permute(0, 2, 3, 1)
-        x = x.view(-1, height // 2, 2, width // 2, 2, channels)
+        x = x.view(-1, channels, height // 2, 2, width // 2, 2)
         x = x.permute(0, 1, 3, 5, 2, 4)
-        x = x.contiguous().view(-1, height // 2, width // 2, channels * 4)
-        z = x.permute(0, 3, 1, 2)
+        z = x.contiguous().view(-1, channels * 4, height // 2, width // 2)
 
         return z, z.new_zeros((1,))
 
@@ -51,11 +49,9 @@ class Squeeze(FlowLayer):
 
         _, channels, height, width = z.size()
 
-        z = z.permute(0, 2, 3, 1)
-        z = z.view(-1, height, width, channels // 4, 2, 2)
+        z = z.view(-1, channels // 4, 2, 2, height, width)
         z = z.permute(0, 1, 4, 2, 5, 3)
-        z = z.contiguous().view(-1, 2 * height, 2 * width, channels // 4)
-        x = z.permute(0, 3, 1, 2)
+        x = z.contiguous().view(-1, channels // 4, 2 * height, 2 * width)
 
         return x
 
