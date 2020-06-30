@@ -163,7 +163,7 @@ class Preprocess(FlowLayer):
         x = x * 255
 
         # 2-1. Add noise to pixels to dequantize: [0, 255] -> [0, 1]
-        x = (x + torch.randn_like(x)) / 256
+        x = (x + torch.rand_like(x)) / 256
 
         # 2-2. Transform pixel valueswith logit:  [0, 1] -> (0, 1)
         x = (1 + (2 * x - 1) * (1 - self.constraint)) / 2
