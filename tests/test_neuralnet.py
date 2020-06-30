@@ -26,10 +26,13 @@ class TestConvBlock(unittest.TestCase):
 
     def test_forward(self):
         x = torch.randn(4, 3, 8, 8)
-        z = self.model(x)
+        log_s, t = self.model(x)
 
-        self.assertTupleEqual(z.size(), (4, 6, 8, 8))
-        self.assertFalse(torch.isnan(z).any())
+        self.assertTupleEqual(log_s.size(), x.size())
+        self.assertFalse(torch.isnan(log_s).any())
+
+        self.assertTupleEqual(t.size(), x.size())
+        self.assertFalse(torch.isnan(t).any())
 
 
 if __name__ == "__main__":

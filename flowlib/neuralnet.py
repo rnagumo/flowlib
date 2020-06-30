@@ -6,6 +6,8 @@ https://github.com/masa-su/pixyz/blob/master/pixyz/layers/resnet.py
 https://github.com/chaiyujin/glow-pytorch/blob/master/glow/modules.py
 """
 
+from typing import Tuple
+
 import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
@@ -51,7 +53,7 @@ class Conv2dZeros(nn.Module):
 
 
 class ConvBlock(nn.Module):
-    """Convolutional basic block.
+    """Convolutional basic block that returns `(log_s, t)`.
 
     * 3 conv layers.
     * Activation normalization after convolution layer.
@@ -77,16 +79,18 @@ class ConvBlock(nn.Module):
         self.conv1.weight.data.zero_()
         self.conv2.weight.data.zero_()
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         """Forward.
 
         Args:
             x (torch.Tensor): Input tensor, size `(b, c, h, w)`.
 
         Returns:
-            x (torch.Tensor): Convolutioned tensor, size `(b, 2*c, h, w)`.
+            log_s (torch.Tensor): Convolutioned log_s, size `(b, c, h, w)`.
+            t (torch.Tensor): Convolutioned t, size `(b, c, h, w)`.
         """
 
+        # NN
         x = self.conv1(x)
         x, _ = self.actnorm1(x)
         x = F.relu(x)
@@ -97,4 +101,7 @@ class ConvBlock(nn.Module):
 
         x = self.conv3(x)
 
-        return x
+        # Split output
+        log_s, t = torch.chunk(x, 2, dim=1)
+
+        return log_s, t
