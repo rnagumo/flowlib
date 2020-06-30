@@ -68,8 +68,9 @@ class ConvBlock(nn.Module):
     def __init__(self, in_channels: int, mid_channels: int):
         super().__init__()
 
-        self.conv1 = nn.Conv2d(in_channels, mid_channels, 3, padding=1)
-        self.conv2 = nn.Conv2d(mid_channels, mid_channels, 1)
+        self.conv1 = nn.Conv2d(
+            in_channels, mid_channels, 3, padding=1, bias=False)
+        self.conv2 = nn.Conv2d(mid_channels, mid_channels, 1, bias=False)
         self.conv3 = Conv2dZeros(mid_channels, in_channels * 2, 3, padding=1)
 
         self.actnorm1 = ActNorm2d(mid_channels)
