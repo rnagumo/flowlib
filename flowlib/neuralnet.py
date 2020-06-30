@@ -106,6 +106,7 @@ class ConvBlock(nn.Module):
         x = self.conv3(x)
 
         # Split output
-        log_s, t = torch.chunk(x, 2, dim=1)
+        log_s = x[:, ::2]
+        t = x[:, 1::2]
 
         return log_s, t
