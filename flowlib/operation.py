@@ -101,6 +101,9 @@ class ChannelwiseSplit(FlowLayer):
     def __init__(self, in_channels: int):
         super().__init__()
 
+        if in_channels % 2 != 0:
+            raise ValueError("Channel number should be even.")
+
         self.conv = Conv2dZeros(in_channels // 2, in_channels, 3, padding=1)
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
