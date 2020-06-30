@@ -83,12 +83,17 @@ class FlowModel(nn.Module):
         """
 
         z, logdet = self.inference(x)
+
+        # Loss is -log p(x), so logdet should be negative
         logdet = -logdet
+
+        # NLL
         log_prob = nll_normal(z, self._prior_mu, self._prior_var, reduce=False)
+        log_prob = log_prob.sum(dim=[1, 2, 3])
 
         pixels = torch.tensor(x.size()[1:]).prod().item()
-        loss = ((log_prob.sum(dim=[1, 2, 3]) + logdet).mean() / pixels
-                + math.log(256)) / math.log(2)
+        loss = ((logdet + logdet).mean() / pixels + math.log(256)
+                ) / math.log(2)
 
         return {"loss": loss, "log_prob": log_prob.mean(),
                 "logdet": logdet.mean()}
