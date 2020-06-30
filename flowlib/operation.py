@@ -115,9 +115,9 @@ class ChannelwiseSplit(FlowLayer):
         """
 
         z1, z2 = torch.chunk(x, 2, dim=1)
-        mu, logvar = torch.chunk(self.conv(z1), 2, dim=1)
 
         # Log likelihood
+        mu, logvar = torch.chunk(self.conv(z1), 2, dim=1)
         logdet = -nll_normal(z2, mu, F.softplus(logvar), reduce=False)
         logdet = logdet.sum(dim=[1, 2, 3])
 
@@ -135,9 +135,9 @@ class ChannelwiseSplit(FlowLayer):
 
         mu, logvar = torch.chunk(self.conv(z), 2, dim=1)
         z2 = mu + F.softplus(0.5 * logvar) * torch.randn_like(logvar)
-        z = torch.cat([z, z2], dim=1)
+        x = torch.cat([z, z2], dim=1)
 
-        return z
+        return x
 
 
 class Preprocess(FlowLayer):
