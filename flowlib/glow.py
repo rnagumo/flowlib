@@ -55,8 +55,7 @@ class Glow(FlowModel):
                     ActNorm2d(current_channels),
                     InvertibleConv(current_channels),
                     AffineCoupling(
-                        ConvBlock(current_channels, hidden_channels),
-                        mask_type="channel_wise", inverse_mask=False),
+                        ConvBlock(current_channels // 2, hidden_channels)),
                 ]
 
             # 3. Split
