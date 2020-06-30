@@ -8,53 +8,16 @@ ref)
 https://github.com/masa-su/pixyz/blob/master/examples/glow.ipynb
 """
 
-from typing import Tuple, List
+from typing import List
 
-import torch
-from torch import Tensor, nn
+from torch import nn
 
 from .base import FlowLayer, FlowModel
 from .conv import InvertibleConv
 from .coupling import AffineCoupling
-from .neuralnet import Conv2dZeros
+from .neuralnet import ConvBlock
 from .normalization import ActNorm2d
 from .operation import Squeeze, ChannelwiseSplit, Preprocess
-
-
-class ScaleTranslateNet(nn.Module):
-    """Neural network for scale and translate.
-
-    Args:
-        in_channels (int): Number of channels in input image.
-        mid_channels (int): Number of channels in mid image.
-    """
-
-    def __init__(self, in_channels: int, mid_channels: int):
-        super().__init__()
-
-        self.conv = nn.Sequential(
-            nn.Conv2d(in_channels, mid_channels, 3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(mid_channels, mid_channels, 1),
-            nn.ReLU(),
-            Conv2dZeros(mid_channels, in_channels * 2, 3, padding=1),
-        )
-
-    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
-        """Forward propagation.
-
-        Args:
-            x (torch.Tensor): Input tensor, size `(b, c, h, w)`.
-
-        Returns:
-            log_s (torch.Tensor): log s value, size `(b, c, h, w)`.
-            t (torch.Tensor): t value, size `(b, c, h, w)`.
-        """
-
-        s_t = self.conv(x)
-        log_s, t = torch.chunk(s_t, 2, dim=1)
-
-        return log_s, t
 
 
 class Glow(FlowModel):
@@ -92,7 +55,7 @@ class Glow(FlowModel):
                     ActNorm2d(current_channels),
                     InvertibleConv(current_channels),
                     AffineCoupling(
-                        ScaleTranslateNet(current_channels, mid_channels),
+                        ConvBlock(current_channels, mid_channels),
                         mask_type="channel_wise", inverse_mask=False),
                 ]
 
