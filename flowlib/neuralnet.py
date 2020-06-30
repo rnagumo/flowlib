@@ -3,14 +3,18 @@
 
 ref)
 https://github.com/masa-su/pixyz/blob/master/pixyz/layers/resnet.py
+https://github.com/chaiyujin/glow-pytorch/blob/master/glow/modules.py
 """
 
 import torch
 from torch import Tensor, nn
+from torch.nn import functional as F
+
+from .normalization import ActNorm2d
 
 
 class Conv2dZeros(nn.Module):
-    """Weight-zero-initialzed 2D convolution.
+    """Weight-bias-zero-initialzed 2D convolution.
 
     Args:
         in_channels (int): Input channel size.
@@ -49,23 +53,29 @@ class Conv2dZeros(nn.Module):
 class ResidualBlock(nn.Module):
     """ResNet basic block.
 
-    The last convolution is initialized with zeros.
+    * 1 conv layer is added at first.
+    * Batch normalization is replaced with activation normalization.
+    * All convolution layers are initialized with zeros.
 
     Args:
         in_channels (int): Number of channels in input image.
+        mid_channels (int): Number of channels in mid image.
+        out_channels (int): Number of channels in output image.
     """
 
-    def __init__(self, in_channels: int):
+    def __init__(self, in_channels: int, mid_channels: int, out_channels: int):
         super().__init__()
 
-        self.conv = nn.Sequential(
-            nn.BatchNorm2d(in_channels),
-            nn.ReLU(),
-            nn.Conv2d(in_channels, in_channels, 3, padding=1, bias=False),
-            nn.BatchNorm2d(in_channels),
-            nn.ReLU(),
-            Conv2dZeros(in_channels, in_channels, 3, padding=1, bias=True),
-        )
+        self.conv1 = nn.Conv2d(in_channels, mid_channels, 3, padding=1)
+        self.conv2 = nn.Conv2d(mid_channels, mid_channels, 1)
+        self.conv3 = Conv2dZeros(mid_channels, out_channels, 3, padding=1)
+
+        self.actnorm1 = ActNorm2d(mid_channels)
+        self.actnorm2 = ActNorm2d(mid_channels)
+
+        # Initialize 1st and 2nd conv layer weight as 0
+        self.conv1.weight.data.zero_()
+        self.conv2.weight.data.zero_()
 
     def forward(self, x: Tensor) -> Tensor:
         """Forward.
@@ -77,4 +87,16 @@ class ResidualBlock(nn.Module):
             x (torch.Tensor): Convolutioned tensor, size `(b, c, h, w)`.
         """
 
-        return x + self.conv(x)
+        skip = x
+
+        x = self.conv1(x)
+        x, _ = self.actnorm1(x)
+        x = F.relu(x)
+
+        x = self.conv2(x)
+        x, _ = self.actnorm2(x)
+        x = F.relu(x)
+
+        x = self.conv3(x)
+
+        return x + skip

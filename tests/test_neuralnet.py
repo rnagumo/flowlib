@@ -9,7 +9,7 @@ import flowlib
 class TestResidualBlock(unittest.TestCase):
 
     def setUp(self):
-        self.model = flowlib.ResidualBlock(3)
+        self.model = flowlib.ResidualBlock(3, 4, 3)
 
     def test_forward(self):
         x = torch.randn(4, 3, 8, 8)
