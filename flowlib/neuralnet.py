@@ -63,9 +63,11 @@ class ConvBlock(nn.Module):
     Args:
         in_channels (int): Number of channels in input image.
         mid_channels (int): Number of channels in mid image.
+        weight_std (float, optional): Std value for weight initialization.
     """
 
-    def __init__(self, in_channels: int, mid_channels: int):
+    def __init__(self, in_channels: int, mid_channels: int,
+                 weight_std: float = 0.05):
         super().__init__()
 
         self.conv1 = nn.Conv2d(
@@ -76,9 +78,9 @@ class ConvBlock(nn.Module):
         self.actnorm1 = ActNorm2d(mid_channels)
         self.actnorm2 = ActNorm2d(mid_channels)
 
-        # Initialize 1st and 2nd conv layer weight as 0
-        self.conv1.weight.data.zero_()
-        self.conv2.weight.data.zero_()
+        # Initialize 1st and 2nd conv layer weight as normal
+        self.conv1.weight.data.normal_(mean=0.0, std=weight_std)
+        self.conv2.weight.data.normal_(mean=0.0, std=weight_std)
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         """Forward.
@@ -87,8 +89,8 @@ class ConvBlock(nn.Module):
             x (torch.Tensor): Input tensor, size `(b, c, h, w)`.
 
         Returns:
-            log_s (torch.Tensor): Convolutioned log_s, size `(b, c, h, w)`.
-            t (torch.Tensor): Convolutioned t, size `(b, c, h, w)`.
+            log_s (torch.Tensor): Convoluted log_s, size `(b, c, h, w)`.
+            t (torch.Tensor): Convoluted t, size `(b, c, h, w)`.
         """
 
         # NN
