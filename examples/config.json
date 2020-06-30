@@ -6,5 +6,7 @@
         "depth": 32,
         "level": 3
     },
-    "optimizer_params": {}
+    "optimizer_params": {},
+    "max_grad_value": 5.0,
+    "max_grad_norm": 100.0
 }

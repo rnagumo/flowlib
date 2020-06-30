@@ -36,6 +36,8 @@ class Config:
     # From config
     optimizer_params: dict
     glow_params: dict
+    max_grad_value: float
+    max_grad_norm: float
 
     # From params
     logdir: Union[str, pathlib.Path]
@@ -167,6 +169,10 @@ class Trainer:
 
             # Backward and update
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(
+                self.model.parameters(), self.config.max_grad_norm)
+            torch.nn.utils.clip_grad_value_(
+                self.model.parameters(), self.config.max_grad_value)
             self.optimizer.step()
 
             # Progress bar update
