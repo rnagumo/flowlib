@@ -50,7 +50,7 @@ class AffineCoupling(FlowLayer):
         x_b = x * mask
 
         log_s, t = self.scale_trans_net(x_b)
-        log_s = log_s * (1 - mask)
+        log_s = torch.sigmoid(log_s + 2) * (1 - mask)
         t = t * (1 - mask)
         z = (x_a * log_s.exp() + t) + x_b
 
@@ -74,7 +74,7 @@ class AffineCoupling(FlowLayer):
         z_b = z * mask
 
         log_s, t = self.scale_trans_net(z_b)
-        log_s = log_s * (1 - mask)
+        log_s = torch.sigmoid(log_s + 2) * (1 - mask)
         t = t * (1 - mask)
         x = (z_a - t) * (-log_s).exp() + z_b
 
