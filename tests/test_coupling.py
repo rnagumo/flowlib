@@ -11,6 +11,27 @@ class TempNet(torch.nn.Module):
         return x, x
 
 
+class TestAffineCoupling(unittest.TestCase):
+    def setUp(self):
+        scale_trans_net = TempNet()
+        self.model = flowlib.AffineCoupling(scale_trans_net)
+
+    def test_forward(self):
+        x = torch.randn(4, 4, 8, 8)
+        z, logdet = self.model(x)
+
+        self.assertTupleEqual(z.size(), x.size())
+        self.assertFalse(torch.isnan(z).any())
+        self.assertTupleEqual(logdet.size(), (4,))
+
+    def test_inverse(self):
+        z = torch.randn(4, 4, 8, 8)
+        x = self.model.inverse(z)
+
+        self.assertTupleEqual(x.size(), z.size())
+        self.assertFalse(torch.isnan(x).any())
+
+
 class TestMaskedAffineCoupling(unittest.TestCase):
 
     def base_case(self, mask_type, inverse_mask):
