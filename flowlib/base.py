@@ -73,7 +73,7 @@ class FlowModel(nn.Module):
         return z
 
     def loss_func(self, x: Tensor) -> Dict[str, Tensor]:
-        """Loss function: -log p(x).
+        """Loss function: -log p(x) = -log p(z) - sum log|det(dh_i/dh_{i-1})|.
 
         Args:
             x (torch.Tensor): Observations, size `(b, c, h, w)`.
