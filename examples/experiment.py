@@ -10,12 +10,14 @@ import logging
 import pathlib
 import time
 
+import matplotlib.pyplot as plt
 import tqdm
 
 import torch
 from torch import optim
 from torch.utils.data import dataloader
 from torchvision import datasets, transforms
+from torchvision.utils import make_grid
 
 import tensorboardX as tb
 
@@ -204,6 +206,8 @@ class Trainer:
                     f"Train loss (steps={self.global_steps}): "
                     f"{loss_logger}")
 
+                self.save_plots()
+
             # Check step limit
             if self.global_steps >= self.config.max_steps:
                 break
@@ -278,6 +282,44 @@ class Trainer:
 
         with (self.logdir / "config.json").open("w") as f:
             json.dump(config, f)
+
+    def save_plots(self) -> None:
+        """Save reconstructed and sampled plots."""
+
+        def gridshow(img):
+            grid = make_grid(img)
+            npgrid = grid.permute(1, 2, 0).numpy()
+            plt.imshow(npgrid, interpolation="nearest")
+
+        with torch.no_grad():
+            x, _ = next(iter(self.test_loader))
+            x = x[:16].to(self.device)
+
+            recon = self.model.inverse(self.model(x))
+            sample = self.model.sample(16)
+
+        x = x.cpu()
+        recon = recon.cpu()
+        sample = sample.cpu()
+
+        # Plot
+        plt.figure(figsize=(20, 12))
+
+        plt.subplot(311)
+        gridshow(x)
+        plt.title("Original")
+
+        plt.subplot(312)
+        gridshow(recon)
+        plt.title("Reconstructed")
+
+        plt.subplot(313)
+        gridshow(sample)
+        plt.title("Sampled")
+
+        plt.tight_layout()
+        plt.savefig(self.logdir / f"fig_{self.global_steps}.png")
+        plt.close()
 
     def quit(self) -> None:
         """Post process."""
