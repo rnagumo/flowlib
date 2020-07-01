@@ -136,6 +136,9 @@ class FlowModel(nn.Module):
     def sample(self, batch: int) -> Tensor:
         """Samples from prior.
 
+        Args:
+            batch (int): Sampled batch size.
+
         Returns:
             x (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
         """
