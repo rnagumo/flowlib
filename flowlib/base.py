@@ -148,6 +148,21 @@ class FlowModel(nn.Module):
 
         return self.inverse(z)
 
+    def reconstruct(self, x: Tensor) -> Tensor:
+        """Reconstructs given image: x' = f^{-1}(f(x)).
+
+        Args:
+            x (torch.Tensor): Observations, size `(b, c, h, w)`.
+
+        Returns:
+            recon (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
+        """
+
+        z = self.forward(x)
+        recon = self.inverse(z)
+
+        return recon
+
 
 def nll_normal(x: Tensor, mu: Tensor, var: Tensor, reduce: bool = True
                ) -> Tensor:

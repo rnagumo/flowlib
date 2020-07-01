@@ -70,6 +70,12 @@ class TestFlowModel(unittest.TestCase):
         x = model.sample(5)
         self.assertTupleEqual(x.size(), (5, 3, 4, 4))
 
+    def test_reconstruct(self):
+        x = torch.randn(2, 3, 4, 4)
+        recon = self.model.reconstruct(x)
+
+        self.assertTupleEqual(recon.size(), x.size())
+
 
 if __name__ == "__main__":
     unittest.main()
