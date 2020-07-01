@@ -7,6 +7,10 @@
         "level": 3
     },
     "optimizer_params": {},
+    "scheduler_params": {
+        "warmup_steps": 4000,
+        "d_dim": 1
+    },
     "max_grad_value": 5.0,
     "max_grad_norm": 100.0
 }

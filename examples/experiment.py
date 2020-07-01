@@ -34,8 +34,9 @@ class Config:
     save_interval: int
 
     # From config
-    optimizer_params: dict
     glow_params: dict
+    optimizer_params: dict
+    scheduler_params: dict
     max_grad_value: float
     max_grad_norm: float
 
@@ -65,6 +66,7 @@ class Trainer:
         self.train_loader: dataloader.DataLoader
         self.test_loader: dataloader.DataLoader
         self.optimizer: optim.optimizer.Optimizer
+        self.scheduler: optim.lr_scheduler._LRScheduler
         self.device: torch.device
         self.global_steps = 0
         self.pbar: tqdm.tqdm
@@ -175,6 +177,7 @@ class Trainer:
                 torch.nn.utils.clip_grad_value_(
                     self.model.parameters(), self.config.max_grad_value)
                 self.optimizer.step()
+                self.scheduler.step()
 
             # Progress bar update
             self.global_steps += 1
@@ -305,6 +308,8 @@ class Trainer:
         # Optimizer
         self.optimizer = optim.Adam(
             self.model.parameters(), **self.config.optimizer_params)
+        self.scheduler = flowlib.NoamScheduler(
+            self.optimizer, **self.config.scheduler_params)
 
         # Progress bar
         self.pbar = tqdm.tqdm(total=self.config.max_steps)

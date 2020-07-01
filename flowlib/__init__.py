@@ -7,3 +7,4 @@ from .glow import Glow
 from .neuralnet import Conv2dZeros, ConvBlock
 from .normalization import ActNorm2d
 from .operation import Squeeze, Unsqueeze, ChannelwiseSplit, Preprocess
+from .scheduler import NoamScheduler
