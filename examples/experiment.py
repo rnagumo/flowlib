@@ -166,20 +166,19 @@ class Trainer:
             # Data to device
             data = data.to(self.device)
 
-            with torch.autograd.detect_anomaly():
-                # Forward
-                self.optimizer.zero_grad()
-                loss_dict = self.model.loss_func(data)
-                loss = loss_dict["loss"].mean()
+            # Forward
+            self.optimizer.zero_grad()
+            loss_dict = self.model.loss_func(data)
+            loss = loss_dict["loss"].mean()
 
-                # Backward and update
-                loss.backward()
-                torch.nn.utils.clip_grad_norm_(
-                    self.model.parameters(), self.config.max_grad_norm)
-                torch.nn.utils.clip_grad_value_(
-                    self.model.parameters(), self.config.max_grad_value)
-                self.optimizer.step()
-                self.scheduler.step()
+            # Backward and update
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(
+                self.model.parameters(), self.config.max_grad_norm)
+            torch.nn.utils.clip_grad_value_(
+                self.model.parameters(), self.config.max_grad_value)
+            self.optimizer.step()
+            self.scheduler.step()
 
             # Progress bar update
             self.global_steps += 1
