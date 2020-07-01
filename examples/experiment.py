@@ -294,7 +294,7 @@ class Trainer:
             x, _ = next(iter(self.test_loader))
             x = x[:16].to(self.device)
 
-            recon = self.model.inverse(self.model(x))
+            recon = self.model.reconstruct(x)
             sample = self.model.sample(16)
 
         x = x.cpu()
