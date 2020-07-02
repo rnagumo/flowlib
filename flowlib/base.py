@@ -117,7 +117,7 @@ class FlowModel(nn.Module):
         log_prob = log_prob.sum(dim=[1, 2, 3])
 
         pixels = torch.tensor(x.size()[1:]).prod().item()
-        loss = ((logdet + logdet).mean() / pixels + math.log(256)
+        loss = ((log_prob + logdet).mean() / pixels + math.log(256)
                 ) / math.log(2)
 
         return {"loss": loss, "log_prob": log_prob.mean(),
