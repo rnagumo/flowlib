@@ -42,21 +42,21 @@ class FlowModel(nn.Module):
     """Base class for Flow models.
 
     Args:
-        in_size (tuple, optional): Tuple of input data size.
+        z_size (tuple, optional): Tuple of latent data size.
 
     Attributes:
         flow_list (nn.ModuleList): Module list of `FlowLayer` classes.
     """
 
-    def __init__(self, in_size: tuple = (1,)):
+    def __init__(self, z_size: tuple = (1,)):
         super().__init__()
 
         # List of flow layers, which should be overriden
         self.flow_list = nn.ModuleList()
 
         # Prior p(z)
-        self.register_buffer("_prior_mu", torch.zeros(in_size))
-        self.register_buffer("_prior_var", torch.ones(in_size))
+        self.register_buffer("_prior_mu", torch.zeros(z_size))
+        self.register_buffer("_prior_var", torch.ones(z_size))
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         """Forward propagation z = f(x) with log-determinant Jacobian.

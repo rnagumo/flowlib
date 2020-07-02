@@ -25,7 +25,7 @@ class TestFlowModel(unittest.TestCase):
         ])
 
     def test_init(self):
-        model = flowlib.FlowModel(in_size=(3, 4, 4))
+        model = flowlib.FlowModel(z_size=(3, 4, 4))
         model.flow_list = nn.ModuleList([
             TempLayer(), TempLayer()
         ])
@@ -56,7 +56,7 @@ class TestFlowModel(unittest.TestCase):
         self.assertTrue(loss_dict["logdet"] < 0 or loss_dict["logdet"] >= 0)
 
     def test_sample(self):
-        model = flowlib.FlowModel(in_size=(3, 4, 4))
+        model = flowlib.FlowModel(z_size=(3, 4, 4))
         model.flow_list = nn.ModuleList([
             TempLayer(), TempLayer()
         ])
