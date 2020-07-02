@@ -324,6 +324,7 @@ class Trainer:
         """Post process."""
 
         self.logger.info("Quit base run method")
+        self.save_configs()
         self.writer.close()
 
     def _base_run(self) -> None:
@@ -336,9 +337,6 @@ class Trainer:
             self.device = torch.device(f"cuda:{self.config.gpus}")
         else:
             self.device = torch.device("cpu")
-
-        # Pre-save
-        self.save_configs()
 
         # Data
         self.load_dataloader()
@@ -364,10 +362,6 @@ class Trainer:
         self.pbar.close()
         self.logger.info("Finish training")
 
-        # Post process
-        self.save_checkpoint()
-        self.quit()
-
     def run(self) -> None:
         """Main run method."""
 
@@ -385,5 +379,7 @@ class Trainer:
             self._base_run()
         except Exception as e:
             self.logger.exception(f"Run function error: {e}")
+        finally:
+            self.quit()
 
         self.logger.info("Finish run")
