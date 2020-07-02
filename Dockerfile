@@ -31,7 +31,7 @@ COPY setup.py setup.py
 
 # Install package
 RUN pip install --upgrade pip
-RUN pip install --no-cache-dir .
+RUN pip install -e .
 
 # Install other requirements for examples
 RUN pip install --no-cache-dir tqdm==4.46.1  tensorboardX==2.0 \
