@@ -1,7 +1,44 @@
 
 # flowlib
 
-Flow models in PyTroch
+Flow models in PyTroch.
+
+# Setup
+
+Clone repository.
+
+```bash
+git clone https://github.com/rnagumo/flowlib.git
+cd flowlib
+```
+
+Install the package in virtual env.
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip3 install --upgrade pip
+pip3 install .
+```
+
+Install other libraries for example code.
+
+```bash
+pip3 install torchvision==0.6.1 tqdm==4.46.1 tensorboardX==2.0 matplotlib==3.2.2
+```
+
+Or use [Docker](https://docs.docker.com/get-docker/) and [NVIDIA Container Toolkit](https://github.com/NVIDIA/nvidia-docker).
+
+```bash
+docker build -t gqnlib .
+docker run -it gqnlib bash
+```
+
+You can run container with GPUs by Docker 19.03.
+
+```bash
+docker run --gpus all -it gqnlib bash
+```
 
 # Reference
 
