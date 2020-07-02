@@ -58,49 +58,8 @@ class FlowModel(nn.Module):
         self.register_buffer("_prior_mu", torch.zeros(in_size))
         self.register_buffer("_prior_var", torch.ones(in_size))
 
-    def forward(self, x: Tensor) -> Tensor:
-        """Forward propagation z = f(x).
-
-        Args:
-            x (torch.Tensor): Observations, size `(b, c, h, w)`.
-
-        Returns:
-            z (torch.Tensor): Encoded latents, size `(b, c, h, w)`.
-        """
-
-        z, _ = self.inference(x)
-
-        return z
-
-    def loss_func(self, x: Tensor) -> Dict[str, Tensor]:
-        """Loss function: -log p(x) = -log p(z) - sum log|det(dh_i/dh_{i-1})|.
-
-        Args:
-            x (torch.Tensor): Observations, size `(b, c, h, w)`.
-
-        Returns:
-            loss_dict (dict of [str, torch.Tensor]): Calculated loss.
-        """
-
-        # Inference z = f(x)
-        z, logdet = self.inference(x)
-
-        # Logdet is negative
-        logdet = -logdet
-
-        # NLL
-        log_prob = nll_normal(z, self._prior_mu, self._prior_var, reduce=False)
-        log_prob = log_prob.sum(dim=[1, 2, 3])
-
-        pixels = torch.tensor(x.size()[1:]).prod().item()
-        loss = ((logdet + logdet).mean() / pixels + math.log(256)
-                ) / math.log(2)
-
-        return {"loss": loss, "log_prob": log_prob.mean(),
-                "logdet": logdet.mean()}
-
-    def inference(self, x: Tensor) -> Tuple[Tensor, Tensor]:
-        """Inferences latents and calculates loss.
+    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
+        """Forward propagation z = f(x) with log-determinant Jacobian.
 
         Args:
             x (torch.Tensor): Observations, size `(b, c, h, w)`.
@@ -133,6 +92,33 @@ class FlowModel(nn.Module):
 
         return z
 
+    def loss_func(self, x: Tensor) -> Dict[str, Tensor]:
+        """Loss function: -log p(x) = -log p(z) - sum log|det(dh_i/dh_{i-1})|.
+
+        Args:
+            x (torch.Tensor): Observations, size `(b, c, h, w)`.
+
+        Returns:
+            loss_dict (dict of [str, torch.Tensor]): Calculated loss.
+        """
+
+        # Inference z = f(x)
+        z, logdet = self.forward(x)
+
+        # Logdet is negative
+        logdet = -logdet
+
+        # NLL
+        log_prob = nll_normal(z, self._prior_mu, self._prior_var, reduce=False)
+        log_prob = log_prob.sum(dim=[1, 2, 3])
+
+        pixels = torch.tensor(x.size()[1:]).prod().item()
+        loss = ((logdet + logdet).mean() / pixels + math.log(256)
+                ) / math.log(2)
+
+        return {"loss": loss, "log_prob": log_prob.mean(),
+                "logdet": logdet.mean()}
+
     def sample(self, batch: int) -> Tensor:
         """Samples from prior.
 
@@ -158,7 +144,7 @@ class FlowModel(nn.Module):
             recon (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
         """
 
-        z = self.forward(x)
+        z, _ = self.forward(x)
         recon = self.inverse(z)
 
         return recon

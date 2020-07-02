@@ -35,22 +35,7 @@ class TestFlowModel(unittest.TestCase):
 
     def test_forward(self):
         x = torch.randn(2, 3, 4, 4)
-        z = self.model(x)
-
-        self.assertTupleEqual(z.size(), x.size())
-
-    def test_loss_func(self):
-        x = torch.randn(2, 3, 4, 4)
-        loss_dict = self.model.loss_func(x)
-
-        self.assertIsInstance(loss_dict, dict)
-        self.assertGreater(loss_dict["loss"], 0)
-        self.assertGreater(loss_dict["log_prob"], 0)
-        self.assertTrue(loss_dict["logdet"] < 0 or loss_dict["logdet"] >= 0)
-
-    def test_inference(self):
-        x = torch.randn(2, 3, 4, 4)
-        z, logdet = self.model.inference(x)
+        z, logdet = self.model(x)
 
         self.assertTupleEqual(z.size(), x.size())
         self.assertTupleEqual(logdet.size(), (2,))
@@ -60,6 +45,15 @@ class TestFlowModel(unittest.TestCase):
         x = self.model.inverse(z)
 
         self.assertTupleEqual(x.size(), z.size())
+
+    def test_loss_func(self):
+        x = torch.randn(2, 3, 4, 4)
+        loss_dict = self.model.loss_func(x)
+
+        self.assertIsInstance(loss_dict, dict)
+        self.assertGreater(loss_dict["loss"], 0)
+        self.assertGreater(loss_dict["log_prob"], 0)
+        self.assertTrue(loss_dict["logdet"] < 0 or loss_dict["logdet"] >= 0)
 
     def test_sample(self):
         model = flowlib.FlowModel(in_size=(3, 4, 4))
