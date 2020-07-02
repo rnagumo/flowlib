@@ -43,12 +43,13 @@ class FlowModel(nn.Module):
 
     Args:
         z_size (tuple, optional): Tuple of latent data size.
+        temperature (float, optional): Temperature for prior.
 
     Attributes:
         flow_list (nn.ModuleList): Module list of `FlowLayer` classes.
     """
 
-    def __init__(self, z_size: tuple = (1,)):
+    def __init__(self, z_size: tuple = (1,), temperature: float = 1.0):
         super().__init__()
 
         # List of flow layers, which should be overriden
@@ -57,6 +58,9 @@ class FlowModel(nn.Module):
         # Prior p(z)
         self.register_buffer("_prior_mu", torch.zeros(z_size))
         self.register_buffer("_prior_var", torch.ones(z_size))
+
+        # Temperature for prior: (p(x))^{T^2}
+        self.temperature = temperature
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         """Forward propagation z = f(x) with log-determinant Jacobian.
@@ -129,7 +133,8 @@ class FlowModel(nn.Module):
             x (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
         """
 
-        var = torch.cat([self._prior_var.unsqueeze(0)] * batch)
+        var = (torch.cat([self._prior_var.unsqueeze(0)] * batch)
+               * self.temperature)
         z = self._prior_mu + var ** 0.5 * torch.randn_like(var)
 
         return self.inverse(z)
