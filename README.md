@@ -3,6 +3,20 @@
 
 Flow models in PyTroch.
 
+# Requirements
+
+* Python == 3.7
+* PyTorch == 1.5.1
+
+Additional requirements for example codes.
+
+* numpy == 1.19.0
+* pandas == 1.0.5
+* matplotlib == 3.2.2
+* torchvision == 0.6.1
+* tqdm == 4.46.1
+* tensorboardX == 2.0
+
 # Setup
 
 Clone repository.
@@ -24,20 +38,20 @@ pip3 install .
 Install other libraries for example code.
 
 ```bash
-pip3 install torchvision==0.6.1 tqdm==4.46.1 tensorboardX==2.0 matplotlib==3.2.2
+pip3 install numpy==1.19.0 pandas==1.0.5 matplotlib==3.2.2 torchvision==0.6.1 tqdm==4.46.1  tensorboardX==2.0
 ```
 
 Or use [Docker](https://docs.docker.com/get-docker/) and [NVIDIA Container Toolkit](https://github.com/NVIDIA/nvidia-docker).
 
 ```bash
-docker build -t gqnlib .
-docker run -it gqnlib bash
+docker build -t flowlib .
+docker run -it flowlib bash
 ```
 
 You can run container with GPUs by Docker 19.03.
 
 ```bash
-docker run --gpus all -it gqnlib bash
+docker run --gpus all -it flowlib bash
 ```
 
 # Reference
