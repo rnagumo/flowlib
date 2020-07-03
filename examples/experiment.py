@@ -11,6 +11,7 @@ import pathlib
 import time
 
 import matplotlib.pyplot as plt
+from torchvision.transforms.transforms import CenterCrop
 import tqdm
 
 import torch
@@ -130,22 +131,44 @@ class Trainer:
 
         self.logger.info("Load dataset")
 
-        # Transform
-        trans_train = transforms.Compose([
-            transforms.RandomHorizontalFlip(),
-            transforms.Resize(self.config.image_size),
-            transforms.ToTensor(),
-        ])
-        trans_test = transforms.Compose([
-            transforms.Resize(self.config.image_size),
-            transforms.ToTensor(),
-        ])
+        # Dataset
+        if self.config.dataset_name == "cifar":
+            # Transform
+            trans_train = transforms.Compose([
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+            ])
+            trans_test = transforms.Compose([
+                transforms.ToTensor(),
+            ])
 
-        # Kwargs for dataset
-        train_kwrags = {"root": self.config.data_dir, "train": True,
-                        "download": True, "transform": trans_train}
-        test_kwargs = {"root": self.config.data_dir, "train": False,
-                       "download": True, "transform": trans_test}
+            # Kwargs for dataset
+            train_kwargs = {"root": self.config.data_dir, "download": True,
+                            "train": True, "transform": trans_train}
+            test_kwargs = {"root": self.config.data_dir, "download": True,
+                           "train": False, "transform": trans_test}
+
+            train_data = datasets.CIFAR10(**train_kwargs)
+            test_data = datasets.CIFAR10(**test_kwargs)
+
+        elif self.config.dataset_name == "celeba":
+            # Transform
+            transform = transforms.Compose([
+                transforms.CenterCrop(self.config.image_size),
+                transforms.ToTensor(),
+            ])
+
+            # Kwargs for dataset
+            train_kwargs = {"root": self.config.data_dir, "download": True,
+                            "split": "train", "transform": transform}
+            test_kwargs = {"root": self.config.data_dir, "download": True,
+                           "split": "test", "transform": transform}
+
+            train_data = datasets.CelebA(**train_kwargs)
+            test_data = datasets.CelebA(**test_kwargs)
+        else:
+            raise ValueError(
+                f"Unexpected dataset name: {self.config.dataset_name}")
 
         # Params for GPU
         if torch.cuda.is_available():
@@ -154,12 +177,12 @@ class Trainer:
             kwargs = {}
 
         self.train_loader = torch.utils.data.DataLoader(
-            datasets.CIFAR10(**train_kwrags), shuffle=True,
-            batch_size=self.config.batch_size, **kwargs)
+            train_data, shuffle=True, batch_size=self.config.batch_size,
+            **kwargs)
 
         self.test_loader = torch.utils.data.DataLoader(
-            datasets.CIFAR10(**test_kwargs), shuffle=False,
-            batch_size=self.config.batch_size, **kwargs)
+            test_data, shuffle=False, batch_size=self.config.batch_size,
+            **kwargs)
 
         self.logger.info(f"Train dataset size: {len(self.train_loader)}")
         self.logger.info(f"Test dataset size: {len(self.test_loader)}")

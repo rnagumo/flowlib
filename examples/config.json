@@ -2,7 +2,7 @@
     "glow_params": {
         "in_channels": 3,
         "hidden_channels": 64,
-        "image_size": 32,
+        "image_size": 64,
         "depth": 32,
         "level": 3
     },
@@ -13,5 +13,5 @@
     },
     "max_grad_value": 5.0,
     "max_grad_norm": 100.0,
-    "image_size": 32
+    "image_size": 64
 }
