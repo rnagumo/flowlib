@@ -12,5 +12,6 @@
         "d_dim": 1
     },
     "max_grad_value": 5.0,
-    "max_grad_norm": 100.0
+    "max_grad_norm": 100.0,
+    "image_size": 32
 }

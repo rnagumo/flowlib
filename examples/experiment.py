@@ -41,11 +41,13 @@ class Config:
     scheduler_params: dict
     max_grad_value: float
     max_grad_norm: float
+    image_size: int
 
     # From params
     logdir: Union[str, pathlib.Path]
     gpus: Optional[str]
     data_dir: Union[str, pathlib.Path]
+    dataset_name: str
 
 
 class Trainer:
@@ -130,9 +132,14 @@ class Trainer:
 
         # Transform
         trans_train = transforms.Compose([
-            transforms.RandomHorizontalFlip(), transforms.ToTensor()])
+            transforms.RandomHorizontalFlip(),
+            transforms.Resize(self.config.image_size),
+            transforms.ToTensor(),
+        ])
         trans_test = transforms.Compose([
-            transforms.ToTensor()])
+            transforms.Resize(self.config.image_size),
+            transforms.ToTensor(),
+        ])
 
         # Kwargs for dataset
         train_kwrags = {"root": self.config.data_dir, "train": True,

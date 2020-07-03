@@ -8,6 +8,7 @@ import pathlib
 import random
 
 import torch
+from torch.utils import data
 
 import flowlib
 from experiment import Trainer
@@ -31,8 +32,8 @@ def main():
     # Path
     logdir = str(pathlib.Path(os.getenv("LOGDIR", "./logs/"),
                               os.getenv("EXPERIMENT_NAME", "tmp")))
-    data_dir = pathlib.Path(os.getenv("DATASET_DIR", "./data/"),
-                            os.getenv("DATASET_NAME", "cifar"))
+    dataset_name = os.getenv("DATASET_NAME", "cifar")
+    data_dir = pathlib.Path(os.getenv("DATASET_DIR", "./data/"), dataset_name)
 
     # Cuda setting
     use_cuda = torch.cuda.is_available() and args.cuda != "null"
@@ -57,6 +58,7 @@ def main():
         "logdir": str(logdir),
         "gpus": gpus,
         "data_dir": str(data_dir),
+        "dataset_name": dataset_name,
     }
     params.update(config)
     params.update(vars(args))
