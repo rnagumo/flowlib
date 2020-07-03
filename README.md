@@ -54,6 +54,92 @@ You can run container with GPUs by Docker 19.03.
 docker run --gpus all -it flowlib bash
 ```
 
+# Example code
+
+## Training
+
+```python
+import torch
+from torch import optim
+from torchvision import transforms, datasets
+
+import flowlib
+
+
+# Dataset
+loader = torch.utils.data.DataLoader(
+    datasets.CIFAR10("./data/cifar", train=True,
+                     transform=transforms.ToTensor(), download=True),
+    shuffle=True, batch_size=32,
+)
+
+# Model
+model = flowlib.Glow()
+optimizer = optim.Adam(model.parameters())
+
+for data, _ in loader:
+    model.train()
+    optimizer.zero_grad()
+
+    loss_dict = model.loss_func(data)
+    loss = loss_dict["loss"].mean()
+    loss.backward()
+    optimizer.step()
+```
+
+## Qualitative Evaluation
+
+```python
+import torch
+from torchvision import transforms, datasets
+from torchvision.utils import make_grid
+import matplotlib.pyplot as plt
+
+import flowlib
+
+
+# Dataset
+loader = torch.utils.data.DataLoader(
+    datasets.CIFAR10("./data/cifar", train=False,
+                     transform=transforms.ToTensor(), download=True),
+    shuffle=False, batch_size=16,
+)
+
+# Model
+model = flowlib.Glow()
+
+# Reconstruct and sample
+model.eval()
+data, _ = next(iter(loader))
+with torch.no_grad():
+    recon = model.reconstruct(data)
+    sample = model.sample(16)
+
+
+def gridshow(img):
+    grid = make_grid(img)
+    npgrid = grid.permute(1, 2, 0).numpy()
+    plt.imshow(npgrid, interpolation="nearest")
+
+
+plt.figure(figsize=(20, 12))
+
+plt.subplot(311)
+gridshow(data)
+plt.title("Original")
+
+plt.subplot(312)
+gridshow(recon)
+plt.title("Reconstructed")
+
+plt.subplot(313)
+gridshow(sample)
+plt.title("Sampled")
+
+plt.tight_layout()
+plt.show()
+```
+
 # Reference
 
 ## Original papers
