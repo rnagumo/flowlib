@@ -4,6 +4,8 @@ from setuptools import setup, find_packages
 
 install_requires = [
     "torch==1.5.1",
+    "numpy==1.19.0",
+    "pandas==1.0.5",
 ]
 
 
