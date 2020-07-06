@@ -35,5 +35,18 @@ class TestConvBlock(unittest.TestCase):
         self.assertFalse(torch.isnan(t).any())
 
 
+class TestLinearZeros(unittest.TestCase):
+
+    def setUp(self):
+        self.model = flowlib.LinearZeros(3, 4)
+
+    def test_forward(self):
+        x = torch.randn(4, 3)
+        z = self.model(x)
+
+        self.assertTupleEqual(z.size(), (4, 4))
+        self.assertFalse(torch.isnan(z).any())
+
+
 if __name__ == "__main__":
     unittest.main()
