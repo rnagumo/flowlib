@@ -54,6 +54,18 @@ You can run container with GPUs by Docker 19.03.
 docker run --gpus all -it flowlib bash
 ```
 
+# Experiment
+
+Run the shell script in `bin` directory. See the script for the experimental detail.
+
+```bash
+# Usage
+bash bin/train.sh <random-seed>
+
+# Example
+bash bin/train.sh 123
+```
+
 # Example code
 
 ## Training
