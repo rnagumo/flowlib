@@ -58,12 +58,18 @@ docker run --gpus all -it flowlib bash
 
 Run the shell script in `bin` directory. See the script for the experimental detail.
 
+* random-seed: Random seed for reproduction.
+* conditional-flag: Boolean flag for conditional model that uses labels for training.
+
 ```bash
 # Usage
-bash bin/train.sh <random-seed>
+bash bin/train.sh <random-seed> <conditional-flag>
 
-# Example
+# Example (non conditional model)
 bash bin/train.sh 123
+
+# Example (conditional model)
+bash bin/train.sh 123 1
 ```
 
 # Example code
