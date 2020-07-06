@@ -95,7 +95,7 @@ class FlowModel(nn.Module):
         # Latent size
         self.z_size = z_size
 
-        # Buffer for device information
+        # Buffer for prior parameters
         self.register_buffer("buffer", torch.zeros(1, *z_size))
 
         # Temperature for prior: (p(x))^{T^2}
