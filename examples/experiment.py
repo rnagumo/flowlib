@@ -35,6 +35,7 @@ class Config:
     max_steps: int
     test_interval: int
     save_interval: int
+    y_conditional: bool
 
     # From config
     glow_params: dict
@@ -190,11 +191,13 @@ class Trainer:
     def train(self) -> None:
         """Trains model."""
 
-        for data, _ in self.train_loader:
+        for data, label in self.train_loader:
             self.model.train()
 
             # Data to device
             data = data.to(self.device)
+            label = (label.to(self.device) if self.config.y_conditional
+                     else None)
 
             # Forward
             self.optimizer.zero_grad()
@@ -249,10 +252,14 @@ class Trainer:
 
         # Run
         self.model.eval()
-        for data, _ in self.test_loader:
+        for data, label in self.test_loader:
             with torch.no_grad():
                 # Data to device
                 data = data.to(self.device)
+                label = (label.to(self.device) if self.config.y_conditional
+                         else None)
+
+                # Calculate loss
                 loss_dict = self.model.loss_func(data)
                 loss = loss_dict["loss"]
 

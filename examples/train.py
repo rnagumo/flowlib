@@ -84,6 +84,9 @@ def init_args():
                         help="Interval steps for testing.")
     parser.add_argument("--save-interval", type=int, default=2,
                         help="Interval steps for saving checkpoints.")
+    parser.add_argument("--y-conditional", action="store_true",
+                        help="Use labels for conditional model "
+                             "(defualt=False).")
 
     return parser.parse_args()
 
