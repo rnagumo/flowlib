@@ -32,9 +32,11 @@ class Glow(FlowModel):
     """
 
     def __init__(self, in_channels: int = 3, hidden_channels: int = 512,
-                 image_size: int = 32, depth: int = 32, level: int = 3):
-        super().__init__((in_channels * 2 ** (level + 1),
-                          image_size // 2 ** level, image_size // 2 ** level))
+                 image_size: int = 32, depth: int = 32, level: int = 3,
+                 **kwargs):
+        z_size = (in_channels * 2 ** (level + 1),
+                  image_size // 2 ** level, image_size // 2 ** level)
+        super().__init__(z_size=z_size, **kwargs)
 
         # Current channel at each level
         current_channels = in_channels
