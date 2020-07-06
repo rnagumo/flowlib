@@ -7,6 +7,7 @@ import math
 
 import torch
 from torch import Tensor, nn
+from torch.nn import functional as F
 
 
 class LinearZeros(nn.Linear):
@@ -77,33 +78,39 @@ class FlowModel(nn.Module):
     Args:
         z_size (tuple, optional): Tuple of latent data size, `(c, h, w)`.
         temperature (float, optional): Temperature for prior.
-        conditional (bool, optional): Boolean flag for y-conditional (default =
-            `False`)
         y_classes (int, optional): Number of classes in dataset.
+        y_weight (float, optional): Weight for classification loss.
 
     Attributes:
         flow_list (nn.ModuleList): Module list of `FlowLayer` classes.
     """
 
     def __init__(self, z_size: tuple = (3, 32, 32), temperature: float = 1.0,
-                 conditional: bool = False, y_classes: int = 10):
+                 y_classes: int = 10, y_weight: float = 0.01):
         super().__init__()
-
-        self.z_size = z_size
-        z_channels = z_size[0]
-
-        # Buffer for device information
-        self.register_buffer("buffer", torch.zeros(1, *z_size))
 
         # List of flow layers, which should be overriden
         self.flow_list = nn.ModuleList()
+
+        # Latent size
+        self.z_size = z_size
+
+        # Buffer for device information
+        self.register_buffer("buffer", torch.zeros(1, *z_size))
 
         # Temperature for prior: (p(x))^{T^2}
         self.temperature = temperature
 
         # Y-conditional prior
-        self.conditional = conditional
-        self.prior_y = LinearZeros(y_classes, z_channels * 2)
+        self.y_classes = y_classes
+        self.y_weight = y_weight
+
+        z_channels = z_size[0]
+        self.y_prior = LinearZeros(y_classes, z_channels * 2)
+        self.y_projector = LinearZeros(z_channels, y_classes)
+
+        # Criterion for classification loss
+        self.criterion = nn.BCEWithLogitsLoss()
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         """Forward propagation z = f(x) with log-determinant Jacobian.
@@ -139,25 +146,49 @@ class FlowModel(nn.Module):
 
         return z
 
-    def prior(self, x: Tensor) -> Tuple[Tensor, Tensor]:
+    def prior(self, batch: int, y: Optional[Tensor] = None
+              ) -> Tuple[Tensor, Tensor]:
         """Samples prior mu and var.
 
         Args:
-            x (torch.Tensor): Observations, size `(b, c, h, w)`.
+            batch (int): Batch size of prior.
+            y (torch.Tensor, optional): Target label, size `(b,)`.
 
         Returns:
-            mu (torch.Tensor): Mean vector.
-            var (torch.Tensor): Variance vector.
+            mu (torch.Tensor): Mean vector, size `(b, c, 1, 1)`.
+            var (torch.Tensor): Variance vector, size `(b, c, 1, 1)`.
+
+        Raises:
+            ValueError: If batch size does not equal size of y.
         """
 
-        batch = x.size(0)
-
-        if not self.conditional:
-            mu = x.new_zeros((batch, *self.z_size))
-            var = x.new_ones((batch, *self.z_size))
+        if y is None:
+            mu = self.buffer.new_zeros((batch, *self.z_size))
+            var = self.buffer.new_ones((batch, *self.z_size))
             return mu, var
 
-        return x.new_zeros((batch, *self.z_size)), x.new_zeros((batch, *self.z_size))
+        if batch != y.size(0):
+            raise ValueError(f"Incompatible size: y batch size {y.size(0)} "
+                             f"should be the same as batch size {batch}")
+
+        # One-hot encoding
+        y = F.one_hot(y, num_classes=self.y_classes)
+
+        # Inference
+        h = self.y_prior(y.float())
+        mu, logvar = torch.chunk(h, 2, dim=-1)
+        var = F.softplus(logvar)
+
+        # Fix size: (b, c) -> (b, c, 1, 1)
+        mu = mu.contiguous().view(batch, -1, 1, 1)
+        var = var.contiguous().view(batch, -1, 1, 1)
+
+        # Expand height and width: (b, c, 1, 1) -> (b, c, h, w)
+        *_, h, w = self.z_size
+        mu = mu.repeat(1, 1, h, w)
+        var = var.repeat(1, 1, h, w)
+
+        return mu, var
 
     def loss_func(self, x: Tensor, y: Optional[Tensor] = None
                   ) -> Dict[str, Tensor]:
@@ -165,17 +196,11 @@ class FlowModel(nn.Module):
 
         Args:
             x (torch.Tensor): Observations, size `(b, c, h, w)`.
-            y (torch.Tensor, optional): Target label, size `(b, t)`.
+            y (torch.Tensor, optional): Target label, size `(b,)`.
 
         Returns:
             loss_dict (dict of [str, torch.Tensor]): Calculated loss.
-
-        Raises:
-            ValueError: If `self.conditional` is `True` and `y` is `None`.
         """
-
-        if self.conditional and y is None:
-            raise ValueError("y cannot be None for conditional model")
 
         # Inference z = f(x)
         z, logdet = self.forward(x)
@@ -184,13 +209,21 @@ class FlowModel(nn.Module):
         logdet = -logdet
 
         # NLL
-        mu, var = self.prior(x)
+        mu, var = self.prior(x.size(0), y)
         log_prob = nll_normal(z, mu, var, reduce=False)
         log_prob = log_prob.sum(dim=[1, 2, 3])
 
-        pixels = torch.tensor(x.size()[1:]).prod().item()
-        loss = ((log_prob + logdet).mean() / pixels + math.log(256)
-                ) / math.log(2)
+        # Classification loss
+        if y is None:
+            loss_classes = 0.
+        else:
+            y_logits = self.y_projector(z.mean(dim=[2, 3]))
+            y = F.one_hot(y, num_classes=self.y_classes).float()
+            loss_classes = self.criterion(y_logits, y)
+
+        loss = (log_prob + logdet + self.y_weight * loss_classes).mean()
+        pixels = torch.tensor(x.size()[1:]).prod()
+        loss = (loss / pixels + math.log(256)) / math.log(2)
 
         return {"loss": loss, "log_prob": log_prob.mean(),
                 "logdet": logdet.mean()}
@@ -200,14 +233,14 @@ class FlowModel(nn.Module):
 
         Args:
             batch (int): Sampled batch size.
-            y (torch.Tensor, optional): Target label, size `(b, t)`.
+            y (torch.Tensor, optional): Target label, size `(b,)`.
 
         Returns:
             x (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
         """
 
-        mu, var = self.prior(self.buffer.repeat(batch, 1, 1, 1))
-        z = mu + self.temperature * var ** 0.5 * torch.randn_like(var)
+        mu, var = self.prior(batch, y)
+        z = mu + self.temperature * (var ** 0.5) * torch.randn_like(var)
 
         return self.inverse(z)
 

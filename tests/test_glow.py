@@ -11,10 +11,6 @@ class TestGlow(unittest.TestCase):
     def setUp(self):
         self.model = flowlib.Glow()
 
-    def test_init(self):
-        self.assertTupleEqual(self.model._prior_mu.size(), (48, 4, 4))
-        self.assertTupleEqual(self.model._prior_var.size(), (48, 4, 4))
-
     def test_forward(self):
         x = torch.rand(2, 3, 32, 32)
         z, logdet = self.model(x)

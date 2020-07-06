@@ -44,6 +44,23 @@ class TestFlowModel(unittest.TestCase):
         self.assertTupleEqual(z.size(), x.size())
         self.assertTupleEqual(logdet.size(), (2,))
 
+    def test_prior(self):
+        mu, var = self.model.prior(2)
+
+        self.assertTupleEqual(mu.size(), (2, 3, 32, 32))
+        self.assertTupleEqual(var.size(), (2, 3, 32, 32))
+
+        # Conditional
+        y = torch.arange(2)
+        mu, var = self.model.prior(2, y)
+
+        self.assertTupleEqual(mu.size(), (2, 3, 32, 32))
+        self.assertTupleEqual(var.size(), (2, 3, 32, 32))
+
+        # Error
+        with self.assertRaises(ValueError):
+            _ = self.model.prior(4, torch.arange(2))
+
     def test_inverse(self):
         z = torch.randn(2, 3, 32, 32)
         x = self.model.inverse(z)
@@ -59,6 +76,16 @@ class TestFlowModel(unittest.TestCase):
         self.assertGreater(loss_dict["log_prob"], 0)
         self.assertTrue(loss_dict["logdet"] < 0 or loss_dict["logdet"] >= 0)
 
+    def test_loss_func_conditional(self):
+        x = torch.randn(2, 3, 32, 32)
+        y = torch.arange(2)
+        loss_dict = self.model.loss_func(x, y)
+
+        self.assertIsInstance(loss_dict, dict)
+        self.assertGreater(loss_dict["loss"], 0)
+        self.assertGreater(loss_dict["log_prob"], 0)
+        self.assertTrue(loss_dict["logdet"] < 0 or loss_dict["logdet"] >= 0)
+
     def test_sample(self):
         model = flowlib.FlowModel(z_size=(3, 32, 32))
         model.flow_list = nn.ModuleList([
@@ -66,6 +93,15 @@ class TestFlowModel(unittest.TestCase):
         ])
 
         x = model.sample(5)
+        self.assertTupleEqual(x.size(), (5, 3, 32, 32))
+
+    def test_sample_conditional(self):
+        model = flowlib.FlowModel(z_size=(3, 32, 32))
+        model.flow_list = nn.ModuleList([
+            TempLayer(), TempLayer()
+        ])
+
+        x = model.sample(5, torch.arange(5))
         self.assertTupleEqual(x.size(), (5, 3, 32, 32))
 
     def test_reconstruct(self):
