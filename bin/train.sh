@@ -1,5 +1,9 @@
 
 # Run training
+# $ bash bin/train.sh <seed>
+
+# Kwargs
+SEED=${1:-0}
 
 # Settings
 MODEL=glow
@@ -20,6 +24,6 @@ export DATASET_NAME=cifar
 # Config for training
 export CONFIG_PATH=./examples/config.json
 
-python3 ./examples/train.py --cuda ${CUDA} --model ${MODEL} \
+python3 ./examples/train.py --cuda ${CUDA} --model ${MODEL} --seed ${SEED}\
     --max-steps ${STEPS} --batch-size ${BATCH_SIZE} \
     --test-interval ${TEST_INTERVAL} --save-interval ${SAVE_INTERVAL}
