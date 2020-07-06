@@ -192,7 +192,9 @@ class FlowModel(nn.Module):
 
     def loss_func(self, x: Tensor, y: Optional[Tensor] = None
                   ) -> Dict[str, Tensor]:
-        """Loss function: -log p(x) = -log p(z) - sum log|det(dh_i/dh_{i-1})|.
+        """Loss function.
+
+        loss = -log p(z) - log|det(dh_i/dh_{i-1})| + lmd * cross_entropy.
 
         Args:
             x (torch.Tensor): Observations, size `(b, c, h, w)`.
@@ -221,6 +223,7 @@ class FlowModel(nn.Module):
             y = F.one_hot(y, num_classes=self.y_classes).float()
             loss_classes = self.criterion(y_logits, y)
 
+        # Loss in bits per dimension
         loss = (log_prob + logdet + self.y_weight * loss_classes).mean()
         pixels = torch.tensor(x.size()[1:]).prod()
         loss = (loss / pixels + math.log(256)) / math.log(2)
