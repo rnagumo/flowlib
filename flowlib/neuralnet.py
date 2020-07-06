@@ -110,36 +110,3 @@ class ConvBlock(nn.Module):
         t = x[:, 1::2]
 
         return log_s, t
-
-
-class LinearZeros(nn.Linear):
-    """Zero-initalized linear layer.
-
-    Args:
-        in_channels (int): Input channel size.
-        out_channels (int): Output channel size.
-        log_scale (float, optional): Log scale for output.
-    """
-
-    def __init__(self, in_channels: int, out_channels: int,
-                 log_scale: float = 3.0):
-        super().__init__(in_channels, out_channels)
-
-        self.log_scale = log_scale
-        self.logs = nn.Parameter(torch.zeros(out_channels))
-
-        # Initialize
-        self.weight.data.zero_()
-        self.bias.data.zero_()
-
-    def forward(self, x: Tensor) -> Tensor:
-        """Forward calculation.
-
-        Args:
-            x (torch.Tensor): Input tensor, size `(b, c)`.
-
-        Returns:
-            x (torch.Tensor): Output tensor, size `(b, d)`.
-        """
-
-        return super().forward(x) * (self.logs * self.log_scale).exp()
