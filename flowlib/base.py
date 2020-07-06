@@ -1,7 +1,7 @@
 
 """Base classes for Flow models."""
 
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Optional
 
 import math
 
@@ -44,12 +44,15 @@ class FlowModel(nn.Module):
     Args:
         z_size (tuple, optional): Tuple of latent data size.
         temperature (float, optional): Temperature for prior.
+        conditional (bool, optional): Boolean flag for y-conditional (default =
+            `False`)
 
     Attributes:
         flow_list (nn.ModuleList): Module list of `FlowLayer` classes.
     """
 
-    def __init__(self, z_size: tuple = (1,), temperature: float = 1.0):
+    def __init__(self, z_size: tuple = (1,), temperature: float = 1.0,
+                 conditional: bool = False):
         super().__init__()
 
         # List of flow layers, which should be overriden
@@ -62,16 +65,27 @@ class FlowModel(nn.Module):
         # Temperature for prior: (p(x))^{T^2}
         self.temperature = temperature
 
-    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
+        # Y-conditional flag
+        self.conditional = conditional
+
+    def forward(self, x: Tensor, y: Optional[Tensor] = None
+                ) -> Tuple[Tensor, Tensor]:
         """Forward propagation z = f(x) with log-determinant Jacobian.
 
         Args:
             x (torch.Tensor): Observations, size `(b, c, h, w)`.
+            y (torch.Tensor, optional): Target label, size `(b, t)`.
 
         Returns:
             z (torch.Tensor): Encoded latents, size `(b, c, h, w)`.
             logdet (torch.Tensor): Log determinant Jacobian.
+
+        Raises:
+            ValueError: If `self.conditional` is `True` and `y` is `None`.
         """
+
+        if self.conditional and y is None:
+            raise ValueError("y cannot be None for conditional model")
 
         logdet = x.new_zeros((x.size(0),))
 
@@ -81,33 +95,42 @@ class FlowModel(nn.Module):
 
         return x, logdet
 
-    def inverse(self, z: Tensor) -> Tensor:
+    def inverse(self, z: Tensor, y: Optional[Tensor] = None) -> Tensor:
         """Inverse propagation x = f^{-1}(z).
 
         Args:
             z (torch.Tensor): latents, size `(b, c, h, w)`.
+            y (torch.Tensor, optional): Target label, size `(b, t)`.
 
         Returns:
             x (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
+
+        Raises:
+            ValueError: If `self.conditional` is `True` and `y` is `None`.
         """
+
+        if self.conditional and y is None:
+            raise ValueError("y cannot be None for conditional model")
 
         for flow in self.flow_list[::-1]:
             z = flow.inverse(z)
 
         return z
 
-    def loss_func(self, x: Tensor) -> Dict[str, Tensor]:
+    def loss_func(self, x: Tensor, y: Optional[Tensor] = None
+                  ) -> Dict[str, Tensor]:
         """Loss function: -log p(x) = -log p(z) - sum log|det(dh_i/dh_{i-1})|.
 
         Args:
             x (torch.Tensor): Observations, size `(b, c, h, w)`.
+            y (torch.Tensor, optional): Target label, size `(b, t)`.
 
         Returns:
             loss_dict (dict of [str, torch.Tensor]): Calculated loss.
         """
 
         # Inference z = f(x)
-        z, logdet = self.forward(x)
+        z, logdet = self.forward(x, y)
 
         # Logdet is negative
         logdet = -logdet
@@ -123,11 +146,12 @@ class FlowModel(nn.Module):
         return {"loss": loss, "log_prob": log_prob.mean(),
                 "logdet": logdet.mean()}
 
-    def sample(self, batch: int) -> Tensor:
+    def sample(self, batch: int, y: Optional[Tensor] = None) -> Tensor:
         """Samples from prior.
 
         Args:
             batch (int): Sampled batch size.
+            y (torch.Tensor, optional): Target label, size `(b, t)`.
 
         Returns:
             x (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
@@ -137,20 +161,21 @@ class FlowModel(nn.Module):
                * self.temperature)
         z = self._prior_mu + var ** 0.5 * torch.randn_like(var)
 
-        return self.inverse(z)
+        return self.inverse(z, y)
 
-    def reconstruct(self, x: Tensor) -> Tensor:
+    def reconstruct(self, x: Tensor, y: Optional[Tensor] = None) -> Tensor:
         """Reconstructs given image: x' = f^{-1}(f(x)).
 
         Args:
             x (torch.Tensor): Observations, size `(b, c, h, w)`.
+            y (torch.Tensor, optional): Target label, size `(b, t)`.
 
         Returns:
             recon (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
         """
 
-        z, _ = self.forward(x)
-        recon = self.inverse(z)
+        z, _ = self.forward(x, y)
+        recon = self.inverse(z, y)
 
         return recon
 
