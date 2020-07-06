@@ -1,9 +1,10 @@
 
 # Run training
-# $ bash bin/train.sh <seed>
+# $ bash bin/train.sh <seed> <conditional>
 
 # Kwargs
 SEED=${1:-0}
+CONDITIONAL=${2:-0}
 
 # Settings
 MODEL=glow
@@ -24,6 +25,14 @@ export DATASET_NAME=cifar
 # Config for training
 export CONFIG_PATH=./examples/config.json
 
-python3 ./examples/train.py --cuda ${CUDA} --model ${MODEL} --seed ${SEED}\
-    --max-steps ${STEPS} --batch-size ${BATCH_SIZE} \
-    --test-interval ${TEST_INTERVAL} --save-interval ${SAVE_INTERVAL}
+if [[ CONDITIONAL -eq 0 ]]; then
+    python3 ./examples/train.py --cuda ${CUDA} --model ${MODEL} \
+        --seed ${SEED} --max-steps ${STEPS} --batch-size ${BATCH_SIZE} \
+        --test-interval ${TEST_INTERVAL} --save-interval ${SAVE_INTERVAL}
+else
+    # Conditional
+    python3 ./examples/train.py --cuda ${CUDA} --model ${MODEL} \
+        --seed ${SEED} --max-steps ${STEPS} --batch-size ${BATCH_SIZE} \
+        --test-interval ${TEST_INTERVAL} --save-interval ${SAVE_INTERVAL} \
+        --y-conditional
+fi
