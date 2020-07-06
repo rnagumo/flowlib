@@ -11,11 +11,11 @@ import pathlib
 import time
 
 import matplotlib.pyplot as plt
-from torchvision.transforms.transforms import CenterCrop
 import tqdm
 
 import torch
 from torch import optim
+from torch.optim import optimizer
 from torch.utils.data import dataloader
 from torchvision import datasets, transforms
 from torchvision.utils import make_grid
@@ -66,16 +66,18 @@ class Trainer:
         self.config = Config(**config)
 
         # Attributes
-        self.logdir = pathlib.Path()
+        self.logdir: pathlib.Path
         self.logger: logging.Logger
         self.writer: tb.SummaryWriter
         self.train_loader: dataloader.DataLoader
         self.test_loader: dataloader.DataLoader
-        self.optimizer: optim.optimizer.Optimizer
+        self.optimizer: optimizer.Optimizer
         self.scheduler: optim.lr_scheduler._LRScheduler
         self.device: torch.device
-        self.global_steps = 0
         self.pbar: tqdm.tqdm
+
+        # Training utils
+        self.global_steps = 0
         self.postfix: Dict[str, float] = {}
 
     def check_logdir(self) -> None:
