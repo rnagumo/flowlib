@@ -98,9 +98,6 @@ class Trainer:
             save_file (bool, optoinal): If `True`, save log file.
         """
 
-        # Log file
-        logpath = self.logdir / "training.log"
-
         # Initialize logger
         logger = logging.getLogger()
         logger.setLevel(logging.DEBUG)
@@ -115,7 +112,7 @@ class Trainer:
 
         # Set file handler (log file)
         if save_file:
-            fh = logging.FileHandler(filename=logpath)
+            fh = logging.FileHandler(filename=self.logdir / "training.log")
             fh.setLevel(logging.DEBUG)
             fh_fmt = logging.Formatter("%(asctime)s - %(module)s.%(funcName)s "
                                        "- %(levelname)s : %(message)s")
