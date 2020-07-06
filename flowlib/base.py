@@ -68,24 +68,16 @@ class FlowModel(nn.Module):
         # Y-conditional flag
         self.conditional = conditional
 
-    def forward(self, x: Tensor, y: Optional[Tensor] = None
-                ) -> Tuple[Tensor, Tensor]:
+    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         """Forward propagation z = f(x) with log-determinant Jacobian.
 
         Args:
             x (torch.Tensor): Observations, size `(b, c, h, w)`.
-            y (torch.Tensor, optional): Target label, size `(b, t)`.
 
         Returns:
             z (torch.Tensor): Encoded latents, size `(b, c, h, w)`.
             logdet (torch.Tensor): Log determinant Jacobian.
-
-        Raises:
-            ValueError: If `self.conditional` is `True` and `y` is `None`.
         """
-
-        if self.conditional and y is None:
-            raise ValueError("y cannot be None for conditional model")
 
         logdet = x.new_zeros((x.size(0),))
 
@@ -130,7 +122,7 @@ class FlowModel(nn.Module):
         """
 
         # Inference z = f(x)
-        z, logdet = self.forward(x, y)
+        z, logdet = self.forward(x)
 
         # Logdet is negative
         logdet = -logdet
@@ -174,7 +166,7 @@ class FlowModel(nn.Module):
             recon (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
         """
 
-        z, _ = self.forward(x, y)
+        z, _ = self.forward(x)
         recon = self.inverse(z, y)
 
         return recon
