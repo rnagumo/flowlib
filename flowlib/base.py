@@ -207,29 +207,31 @@ class FlowModel(nn.Module):
         # Inference z = f(x)
         z, logdet = self.forward(x)
 
-        # Logdet is negative
+        # Negative logdet
         logdet = -logdet
 
-        # NLL
+        # NLL of prior
         mu, var = self.prior(x.size(0), y)
         log_prob = nll_normal(z, mu, var, reduce=False)
         log_prob = log_prob.sum(dim=[1, 2, 3])
 
+        # Loss in bits per dimension
+        pixels = torch.tensor(x.size()[1:]).prod()
+        nll = ((log_prob + logdet) / pixels + math.log(256)) / math.log(2)
+
         # Classification loss
         if y is None:
-            loss_classes = 0.
+            loss_classes = torch.zeros([])
         else:
             y_logits = self.y_projector(z.mean(dim=[2, 3]))
             y = F.one_hot(y, num_classes=self.y_classes).float()
             loss_classes = self.criterion(y_logits, y)
 
-        # Loss in bits per dimension
-        loss = (log_prob + logdet + self.y_weight * loss_classes).mean()
-        pixels = torch.tensor(x.size()[1:]).prod()
-        loss = (loss / pixels + math.log(256)) / math.log(2)
+        # Returned loss
+        loss = nll + self.y_weight * loss_classes
 
-        return {"loss": loss, "log_prob": log_prob.mean(),
-                "logdet": logdet.mean()}
+        return {"loss": loss.mean(), "log_prob": log_prob.mean(),
+                "logdet": logdet.mean(), "classification": loss_classes.mean()}
 
     def sample(self, batch: int, y: Optional[Tensor] = None) -> Tensor:
         """Samples from prior.
