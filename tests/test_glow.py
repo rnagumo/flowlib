@@ -31,13 +31,25 @@ class TestGlow(unittest.TestCase):
         self.assertFalse(torch.isnan(x).any())
 
     def test_loss_func(self):
-        x = torch.rand(2, 3, 32, 32)
+        x = torch.randn(2, 3, 32, 32)
         loss_dict = self.model.loss_func(x)
 
         self.assertIsInstance(loss_dict, dict)
-        self.assertGreater(loss_dict["loss"], 0)
-        self.assertGreater(loss_dict["log_prob"], 0)
-        self.assertTrue(loss_dict["logdet"] < 0 or loss_dict["logdet"] >= 0)
+        self.assertNotEqual(loss_dict["loss"], 0)
+        self.assertNotEqual(loss_dict["log_prob"], 0)
+        self.assertNotEqual(loss_dict["logdet"], 0)
+        self.assertEqual(loss_dict["classification"], 0)
+
+    def test_loss_func_conditional(self):
+        x = torch.randn(2, 3, 32, 32)
+        y = torch.arange(2)
+        loss_dict = self.model.loss_func(x, y)
+
+        self.assertIsInstance(loss_dict, dict)
+        self.assertNotEqual(loss_dict["loss"], 0)
+        self.assertNotEqual(loss_dict["log_prob"], 0)
+        self.assertNotEqual(loss_dict["logdet"], 0)
+        self.assertNotEqual(loss_dict["classification"], 0)
 
     def test_sample(self):
         # Initialize actnorm by forward step

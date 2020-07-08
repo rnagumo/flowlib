@@ -72,9 +72,10 @@ class TestFlowModel(unittest.TestCase):
         loss_dict = self.model.loss_func(x)
 
         self.assertIsInstance(loss_dict, dict)
-        self.assertGreater(loss_dict["loss"], 0)
-        self.assertGreater(loss_dict["log_prob"], 0)
-        self.assertTrue(loss_dict["logdet"] < 0 or loss_dict["logdet"] >= 0)
+        self.assertNotEqual(loss_dict["loss"], 0)
+        self.assertNotEqual(loss_dict["log_prob"], 0)
+        self.assertNotEqual(loss_dict["logdet"], 0)
+        self.assertEqual(loss_dict["classification"], 0)
 
     def test_loss_func_conditional(self):
         x = torch.randn(2, 3, 32, 32)
@@ -82,9 +83,10 @@ class TestFlowModel(unittest.TestCase):
         loss_dict = self.model.loss_func(x, y)
 
         self.assertIsInstance(loss_dict, dict)
-        self.assertGreater(loss_dict["loss"], 0)
-        self.assertGreater(loss_dict["log_prob"], 0)
-        self.assertTrue(loss_dict["logdet"] < 0 or loss_dict["logdet"] >= 0)
+        self.assertNotEqual(loss_dict["loss"], 0)
+        self.assertNotEqual(loss_dict["log_prob"], 0)
+        self.assertNotEqual(loss_dict["logdet"], 0)
+        self.assertNotEqual(loss_dict["classification"], 0)
 
     def test_sample(self):
         model = flowlib.FlowModel(z_size=(3, 32, 32))
