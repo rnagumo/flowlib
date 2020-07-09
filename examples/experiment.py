@@ -134,6 +134,8 @@ class Trainer:
         # Dataset
         if self.config.dataset_name == "cifar":
             # Transform
+            # For training, augment datasets with horizontal flips according to
+            # Real-NVP (L. Dinh+, 2017) paper.
             trans_train = transforms.Compose([
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),

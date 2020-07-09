@@ -144,7 +144,14 @@ class ChannelwiseSplit(FlowLayer):
 
 
 class Preprocess(FlowLayer):
-    """Preprocess for input images."""
+    """Preprocess for input images.
+
+    Ref)
+
+    https://github.com/taesungp/real-nvp/blob/master/real_nvp/model.py#L42-L54
+
+    https://github.com/tensorflow/models/blob/master/research/real_nvp/real_nvp_multiscale_dataset.py#L1061-L1077
+    """
 
     def __init__(self):
         super().__init__()
