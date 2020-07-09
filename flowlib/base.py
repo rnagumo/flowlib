@@ -225,10 +225,10 @@ class FlowModel(nn.Module):
         else:
             y_logits = self.y_projector(z.mean(dim=[2, 3]))
             y = F.one_hot(y, num_classes=self.y_classes).float()
-            loss_classes = self.criterion(y_logits, y)
+            loss_classes = self.y_weight * self.criterion(y_logits, y)
 
         # Returned loss
-        loss = nll + self.y_weight * loss_classes
+        loss = nll + loss_classes
 
         return {"loss": loss.mean(), "log_prob": log_prob.mean(),
                 "logdet": logdet.mean(), "classification": loss_classes.mean()}
