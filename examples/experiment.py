@@ -202,7 +202,7 @@ class Trainer:
 
             # Forward
             self.optimizer.zero_grad()
-            loss_dict = self.model.loss_func(data)
+            loss_dict = self.model.loss_func(data, label)
             loss = loss_dict["loss"].mean()
 
             # Backward and update
@@ -261,7 +261,7 @@ class Trainer:
                          else None)
 
                 # Calculate loss
-                loss_dict = self.model.loss_func(data)
+                loss_dict = self.model.loss_func(data, label)
                 loss = loss_dict["loss"]
 
             # Update progress bar
