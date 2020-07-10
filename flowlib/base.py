@@ -216,12 +216,12 @@ class FlowModel(nn.Module):
         log_prob = log_prob.sum(dim=[1, 2, 3])
 
         # Loss in bits per dimension
-        pixels = torch.tensor(x.size()[1:]).prod()
+        pixels = torch.tensor(x.size()[1:]).prod().item()
         nll = ((log_prob + logdet) / pixels + math.log(256)) / math.log(2)
 
         # Classification loss
         if y is None:
-            loss_classes = torch.zeros([])
+            loss_classes = x.new_zeros((1,))
         else:
             y_logits = self.y_projector(z.mean(dim=[2, 3]))
             y = F.one_hot(y, num_classes=self.y_classes).float()
