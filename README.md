@@ -35,23 +35,17 @@ pip3 install --upgrade pip
 pip3 install .
 ```
 
-Install other libraries for example code.
-
-```bash
-pip3 install numpy==1.19.0 pandas==1.0.5 matplotlib==3.2.2 torchvision==0.6.1 tqdm==4.46.1  tensorboardX==2.0
-```
-
-Or use [Docker](https://docs.docker.com/get-docker/) and [NVIDIA Container Toolkit](https://github.com/NVIDIA/nvidia-docker).
+Or use [Docker](https://docs.docker.com/get-docker/) and [NVIDIA Container Toolkit](https://github.com/NVIDIA/nvidia-docker). You can run container with GPUs by Docker 19.03+.
 
 ```bash
 docker build -t flowlib .
-docker run -it flowlib bash
+docker run --gpus all -it flowlib bash
 ```
 
-You can run container with GPUs by Docker 19.03.
+Install other requirements for example code.
 
 ```bash
-docker run --gpus all -it flowlib bash
+pip3 install numpy==1.19.0 pandas==1.0.5 matplotlib==3.2.2 torchvision==0.6.1 tqdm==4.46.1  tensorboardX==2.0
 ```
 
 # Experiment
