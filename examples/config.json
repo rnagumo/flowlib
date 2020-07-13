@@ -5,7 +5,7 @@
         "image_size": 32,
         "depth": 32,
         "level": 3,
-        "temperature": 1.0,
+        "temperature": 0.75,
         "y_classes": 10,
         "y_weight": 0.01
     },
