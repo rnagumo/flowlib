@@ -165,6 +165,7 @@ class FlowModel(nn.Module):
         if y is None:
             mu = self.buffer.new_zeros((batch, *self.z_size))
             var = self.buffer.new_ones((batch, *self.z_size))
+            var = var * self.temperature ** 2
             return mu, var
 
         if batch != y.size(0):
@@ -177,7 +178,7 @@ class FlowModel(nn.Module):
         # Inference
         h = self.y_prior(y.float())
         mu, logvar = torch.chunk(h, 2, dim=-1)
-        var = F.softplus(logvar)
+        var = F.softplus(logvar) * self.temperature ** 2
 
         # Fix size: (b, c) -> (b, c, 1, 1)
         mu = mu.contiguous().view(batch, -1, 1, 1)
@@ -245,7 +246,7 @@ class FlowModel(nn.Module):
         """
 
         mu, var = self.prior(batch, y)
-        z = mu + self.temperature * (var ** 0.5) * torch.randn_like(var)
+        z = mu + (var ** 0.5) * torch.randn_like(var)
 
         return self.inverse(z)
 
