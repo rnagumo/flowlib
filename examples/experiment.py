@@ -329,11 +329,13 @@ class Trainer:
             plt.imshow(npgrid, interpolation="nearest")
 
         with torch.no_grad():
-            x, _ = next(iter(self.test_loader))
+            x, label = next(iter(self.test_loader))
             x = x[:16].to(self.device)
+            label = (label[:16].to(self.device) if self.config.y_conditional
+                     else None)
 
             recon = self.model.reconstruct(x)
-            sample = self.model.sample(16)
+            sample = self.model.sample(16, label)
 
         x = x.cpu()
         recon = recon.cpu()
