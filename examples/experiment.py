@@ -53,10 +53,10 @@ class Config:
 
 
 class Trainer:
-    """Trainer class for Flow models.
+    """Trainer class for ML models.
 
     Args:
-        model (flowlib.FlowModel): GQN model.
+        model (flowlib.FlowModel): ML model.
         config (dict): Dictionary of hyper-parameters.
     """
 
