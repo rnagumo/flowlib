@@ -1,5 +1,5 @@
 
-# flowlib
+# flowlib (Work in progress)
 
 Flow models in PyTroch.
 
