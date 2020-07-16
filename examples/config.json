@@ -1,0 +1,20 @@
+{
+    "glow_params": {
+        "in_channels": 3,
+        "hidden_channels": 512,
+        "image_size": 32,
+        "depth": 32,
+        "level": 3,
+        "temperature": 0.75,
+        "y_classes": 10,
+        "y_weight": 0.01
+    },
+    "optimizer_params": {},
+    "scheduler_params": {
+        "warmup_steps": 4000,
+        "d_dim": 1
+    },
+    "max_grad_value": 5.0,
+    "max_grad_norm": 100.0,
+    "image_size": 32
+}
