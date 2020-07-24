@@ -287,3 +287,30 @@ def nll_normal(x: Tensor, mu: Tensor, var: Tensor, reduce: bool = True
     if reduce:
         return nll.sum(-1)
     return nll
+
+
+def nll_bernoulli(x: Tensor, probs: Tensor, reduce: bool = True) -> Tensor:
+    """Negative log likelihood for Bernoulli distribution.
+
+    Ref)
+    https://pytorch.org/docs/stable/_modules/torch/distributions/bernoulli.html#Bernoulli
+    https://github.com/pytorch/pytorch/blob/master/torch/distributions/utils.py#L75
+
+    Args:
+        x (torch.Tensor): Inputs tensor, size `(*, dim)`.
+        probs (torch.Tensor): Probability parameter, size `(*, dim)`.
+        reduce (bool, optional): If `True`, sum calculated loss for each
+            data point.
+
+    Returns:
+        nll (torch.Tensor): Calculated nll for each data, size `(*,)` if
+            `reduce` is `True`, `(*, dim)` otherwise.
+    """
+
+    probs = probs.clamp(min=1e-6, max=1 - 1e-6)
+    logits = torch.log(probs) - torch.log1p(-probs)
+    nll = F.binary_cross_entropy_with_logits(logits, x, reduction="none")
+
+    if reduce:
+        return nll.sum(-1)
+    return nll

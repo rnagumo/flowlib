@@ -12,9 +12,9 @@ method is Forward method in Table 6.
 from typing import Tuple
 
 import torch
-from torch import Tensor
+from torch import Tensor, log
 
-from .base import FlowLayer, nll_normal
+from .base import FlowLayer, nll_bernoulli, nll_normal
 
 
 class Slicing(FlowLayer):
@@ -64,3 +64,39 @@ class Slicing(FlowLayer):
         x, _ = torch.chunk(z, 2, dim=1)
 
         return x
+
+
+class AbsSurjection(FlowLayer):
+    """Absolute generative surjection."""
+
+    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
+        """Forward propagation z = f(x) with log-determinant Jacobian.
+
+        Args:
+            x (torch.Tensor): Observations, size `(b, c, h, w)`.
+
+        Returns:
+            z (torch.Tensor): Encoded latents, size `(b, c, h, w)`.
+            logdet (torch.Tensor): Log determinant Jacobian.
+        """
+
+        s = torch.bernoulli(torch.sigmoid(x))
+        z = s * x
+
+        # Log det
+        logdet = nll_bernoulli(s, torch.sigmoid(x), reduce=False)
+        logdet = logdet.sum(dim=[1, 2, 3])
+
+        return z, logdet
+
+    def inverse(self, z: Tensor) -> Tensor:
+        """Inverse propagation x = f^{-1}(z).
+
+        Args:
+            z (torch.Tensor): latents, size `(b, c, h, w)`.
+
+        Returns:
+            x (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
+        """
+
+        return z.abs()
