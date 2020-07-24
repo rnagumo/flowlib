@@ -41,7 +41,7 @@ class TestAbsSurjection(unittest.TestCase):
         self.assertTupleEqual(logdet.size(), (4,))
 
     def test_inverse(self):
-        z = torch.randn(4, 4, 8, 8)
+        z = torch.randn(4, 3, 8, 8)
         x = self.model.inverse(z)
 
         self.assertTupleEqual(x.size(), z.size())
