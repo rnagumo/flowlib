@@ -176,3 +176,55 @@ class MaxSurjection(FlowLayer):
         x = x.view(b, c, h, w)
 
         return x
+
+
+class SortSurjection(FlowLayer):
+    """Sort generative surjection layer."""
+
+    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
+        """Forward propagation z = f(x) with log-determinant Jacobian.
+
+        Args:
+            x (torch.Tensor): Observations, size `(b, c, h, w)`.
+
+        Returns:
+            z (torch.Tensor): Encoded latents, size `(b, c, h, w)`.
+            logdet (torch.Tensor): Log determinant Jacobian.
+        """
+
+        b, c, h, w = x.size()
+        x = x.view(b, c, h * w)
+
+        # Sort
+        idx1 = torch.arange(b).view(-1, 1, 1)
+        idx2 = torch.arange(c).view(1, -1, 1)
+        idx3 = torch.randperm(h * w)
+        z = x[idx1, idx2, idx3]
+
+        # Revert shape
+        z = z.view(b, c, h, w)
+
+        # Log det
+        # TODO: I assume that 1/D! ~ 0
+        logdet = x.new_zeros((b,))
+
+        return z, logdet
+
+    def inverse(self, z: Tensor) -> Tensor:
+        """Inverse propagation x = f^{-1}(z).
+
+        Args:
+            z (torch.Tensor): latents, size `(b, c, h, w)`.
+
+        Returns:
+            x (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
+        """
+
+        b, c, h, w = z.size()
+        z = z.view(b, c, h * w)
+        x, _ = z.sort()
+
+        # Revert shape
+        x = x.view(b, c, h, w)
+
+        return x
