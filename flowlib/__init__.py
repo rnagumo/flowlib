@@ -8,4 +8,4 @@ from .neuralnet import Conv2dZeros, ConvBlock
 from .normalization import ActNorm2d
 from .operation import Squeeze, Unsqueeze, ChannelwiseSplit, Preprocess
 from .scheduler import NoamScheduler
-from .surjection import Slicing, AbsSurjection
+from .surjection import Slicing, AbsSurjection, MaxSurjection
