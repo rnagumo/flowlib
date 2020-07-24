@@ -12,7 +12,7 @@ method is Forward method in Table 6.
 from typing import Tuple
 
 import torch
-from torch import Tensor, log
+from torch import Tensor
 
 from .base import FlowLayer, nll_bernoulli, nll_normal
 
