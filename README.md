@@ -154,6 +154,10 @@ plt.show()
 
 # Reference
 
+## Reviews
+
+* G. Papamakarios *et al*., "Normalizing Flows for Probabilistic Modeling and Inference." [arXiv](http://arxiv.org/abs/1912.02762)
+
 ## Original papers
 
 * D. Rezende *et al*., "Variational Inference with Normalizing Flows." (ICML 2015) [arXiv](http://arxiv.org/abs/1505.05770)
