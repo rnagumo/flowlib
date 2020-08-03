@@ -45,7 +45,7 @@ docker run --gpus all -it flowlib bash
 Install other requirements for example code.
 
 ```bash
-pip3 install numpy==1.19.0 pandas==1.0.5 matplotlib==3.2.2 torchvision==0.6.1 tqdm==4.46.1  tensorboardX==2.0
+pip3 install numpy==1.19.0 pandas==1.0.5 matplotlib==3.2.2 torchvision==0.7.0 tqdm==4.46.1  tensorboardX==2.0
 ```
 
 # Experiment
