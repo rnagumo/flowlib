@@ -165,7 +165,6 @@ class FlowModel(nn.Module):
         if y is None:
             mu = self.buffer.new_zeros((batch, *self.z_size))
             var = self.buffer.new_ones((batch, *self.z_size))
-            var = var * self.temperature ** 2
             return mu, var
 
         if batch != y.size(0):
@@ -178,7 +177,7 @@ class FlowModel(nn.Module):
         # Inference
         h = self.y_prior(y.float())
         mu, logvar = torch.chunk(h, 2, dim=-1)
-        var = F.softplus(logvar) * self.temperature ** 2
+        var = F.softplus(logvar)
 
         # Fix size: (b, c) -> (b, c, 1, 1)
         mu = mu.contiguous().view(batch, -1, 1, 1)
@@ -246,7 +245,7 @@ class FlowModel(nn.Module):
         """
 
         mu, var = self.prior(batch, y)
-        z = mu + (var ** 0.5) * torch.randn_like(var)
+        z = mu + (var ** 0.5) * torch.randn_like(var) * self.temperature
 
         return self.inverse(z)
 
@@ -283,6 +282,33 @@ def nll_normal(x: Tensor, mu: Tensor, var: Tensor, reduce: bool = True
     """
 
     nll = 0.5 * ((2 * math.pi * var).log() + (x - mu) ** 2 / var)
+
+    if reduce:
+        return nll.sum(-1)
+    return nll
+
+
+def nll_bernoulli(x: Tensor, probs: Tensor, reduce: bool = True) -> Tensor:
+    """Negative log likelihood for Bernoulli distribution.
+
+    Ref)
+    https://pytorch.org/docs/stable/_modules/torch/distributions/bernoulli.html#Bernoulli
+    https://github.com/pytorch/pytorch/blob/master/torch/distributions/utils.py#L75
+
+    Args:
+        x (torch.Tensor): Inputs tensor, size `(*, dim)`.
+        probs (torch.Tensor): Probability parameter, size `(*, dim)`.
+        reduce (bool, optional): If `True`, sum calculated loss for each
+            data point.
+
+    Returns:
+        nll (torch.Tensor): Calculated nll for each data, size `(*,)` if
+            `reduce` is `True`, `(*, dim)` otherwise.
+    """
+
+    probs = probs.clamp(min=1e-6, max=1 - 1e-6)
+    logits = torch.log(probs) - torch.log1p(-probs)
+    nll = F.binary_cross_entropy_with_logits(logits, x, reduction="none")
 
     if reduce:
         return nll.sum(-1)
