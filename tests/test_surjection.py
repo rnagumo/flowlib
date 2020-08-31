@@ -1,94 +1,79 @@
 
-import unittest
-
 import torch
-
 import flowlib
 
 
-class TestSlicing(unittest.TestCase):
+def test_slicing_forward() -> None:
+    model = flowlib.Slicing()
+    x = torch.randn(4, 3, 8, 8)
+    z, logdet = model(x)
 
-    def setUp(self):
-        self.model = flowlib.Slicing()
-
-    def test_forward(self):
-        x = torch.randn(4, 3, 8, 8)
-        z, logdet = self.model(x)
-
-        self.assertTupleEqual(z.size(), (4, 6, 8, 8))
-        self.assertFalse(torch.isnan(z).any())
-        self.assertTupleEqual(logdet.size(), (4,))
-
-    def test_inverse(self):
-        z = torch.randn(4, 4, 8, 8)
-        x = self.model.inverse(z)
-
-        self.assertTupleEqual(x.size(), (4, 2, 8, 8))
-        self.assertFalse(torch.isnan(x).any())
+    assert z.size() == (4, 6, 8, 8)
+    assert not torch.isnan(z).any()
+    assert logdet.size() == (4,)
 
 
-class TestAbsSurjection(unittest.TestCase):
+def test_slicing_inverse() -> None:
+    model = flowlib.Slicing()
+    z = torch.randn(4, 4, 8, 8)
+    x = model.inverse(z)
 
-    def setUp(self):
-        self.model = flowlib.AbsSurjection()
-
-    def test_forward(self):
-        x = torch.randn(4, 3, 8, 8)
-        z, logdet = self.model(x)
-
-        self.assertTupleEqual(z.size(), x.size())
-        self.assertFalse(torch.isnan(z).any())
-        self.assertTupleEqual(logdet.size(), (4,))
-
-    def test_inverse(self):
-        z = torch.randn(4, 3, 8, 8)
-        x = self.model.inverse(z)
-
-        self.assertTupleEqual(x.size(), z.size())
-        self.assertFalse(torch.isnan(x).any())
+    assert x.size() == (4, 2, 8, 8)
+    assert not torch.isnan(x).any()
 
 
-class TestMaxSurjection(unittest.TestCase):
+def test_abs_surjection_forward() -> None:
+    model = flowlib.AbsSurjection()
+    x = torch.randn(4, 3, 8, 8)
+    z, logdet = model(x)
 
-    def setUp(self):
-        self.model = flowlib.MaxSurjection()
-
-    def test_forward(self):
-        x = torch.randn(4, 3, 8, 8)
-        z, logdet = self.model(x)
-
-        self.assertTupleEqual(z.size(), x.size())
-        self.assertFalse(torch.isnan(z).any())
-        self.assertTupleEqual(logdet.size(), (4,))
-
-    def test_inverse(self):
-        z = torch.randn(4, 3, 8, 8)
-        x = self.model.inverse(z)
-
-        self.assertTupleEqual(x.size(), z.size())
-        self.assertFalse(torch.isnan(x).any())
+    assert z.size() == x.size()
+    assert not torch.isnan(z).any()
+    assert logdet.size() == (4,)
 
 
-class TestSortSurjection(unittest.TestCase):
+def test_abs_surjection_inverse() -> None:
+    model = flowlib.AbsSurjection()
+    z = torch.randn(4, 3, 8, 8)
+    x = model.inverse(z)
 
-    def setUp(self):
-        self.model = flowlib.SortSurjection()
-
-    def test_forward(self):
-        x = torch.randn(4, 3, 8, 8)
-        z, logdet = self.model(x)
-
-        self.assertTupleEqual(z.size(), x.size())
-        self.assertFalse(torch.isnan(z).any())
-        self.assertTupleEqual(logdet.size(), (4,))
-
-    def test_inverse(self):
-        z = torch.randn(4, 3, 8, 8)
-        x = self.model.inverse(z)
-
-        self.assertTupleEqual(x.size(), z.size())
-        self.assertFalse(torch.isnan(x).any())
+    assert x.size() == z.size()
+    assert not torch.isnan(x).any()
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_max_surjection_forward() -> None:
+    model = flowlib.MaxSurjection()
+    x = torch.randn(4, 3, 8, 8)
+    z, logdet = model(x)
+
+    assert z.size() == x.size()
+    assert not torch.isnan(z).any()
+    assert logdet.size() == (4,)
+
+
+def test_max_surjection_inverse() -> None:
+    model = flowlib.MaxSurjection()
+    z = torch.randn(4, 3, 8, 8)
+    x = model.inverse(z)
+
+    assert x.size() == z.size()
+    assert not torch.isnan(x).any()
+
+
+def test_sort_surjection_forward() -> None:
+    model = flowlib.SortSurjection()
+    x = torch.randn(4, 3, 8, 8)
+    z, logdet = model(x)
+
+    assert z.size() == x.size()
+    assert not torch.isnan(z).any()
+    assert logdet.size() == (4,)
+
+
+def test_sort_surjection_inverse() -> None:
+    model = flowlib.SortSurjection()
+    z = torch.randn(4, 3, 8, 8)
+    x = model.inverse(z)
+
+    assert x.size() == z.size()
+    assert not torch.isnan(x).any()

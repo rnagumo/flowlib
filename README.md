@@ -5,17 +5,17 @@ Flow models in PyTroch.
 
 # Requirements
 
-* Python == 3.7
-* PyTorch == 1.6.0
+* Python >= 3.7
+* PyTorch >= 1.6
 
 Additional requirements for example codes.
 
-* numpy == 1.19.0
-* pandas == 1.0.5
-* matplotlib == 3.2.2
-* torchvision == 0.7.0
-* tqdm == 4.46.1
-* tensorboardX == 2.0
+* numpy >= 1.19
+* pandas >= 1.0
+* matplotlib >= 3.2
+* torchvision >= 0.7
+* tqdm >= 4.48
+* tensorboardX >= 2.1
 
 # Setup
 
@@ -45,7 +45,7 @@ docker run --gpus all -it flowlib bash
 Install other requirements for example code.
 
 ```bash
-pip3 install numpy==1.19.0 pandas==1.0.5 matplotlib==3.2.2 torchvision==0.7.0 tqdm==4.46.1  tensorboardX==2.0
+pip3 install ".[example]"
 ```
 
 # Experiment
