@@ -8,7 +8,12 @@ install_requires = [
 
 
 extras_require = {
-    "testing": ["pytest"],
+    "dev": [
+        "pytest",
+        "black",
+        "flake8",
+        "mypy",
+    ],
     "example": [
         "torchvision>=0.7",
         "numpy>=1.19",
