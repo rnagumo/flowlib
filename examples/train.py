@@ -52,7 +52,7 @@ def init_args() -> argparse.Namespace:
         "--cuda",
         type=str,
         default="0",
-        help="Number of CUDA device with comma separation, " "ex. '0,1'. 'null' means cpu device.",
+        help="Number of CUDA device with comma separation, ex. '0,1'. 'null' means cpu device.",
     )
     parser.add_argument("--model", type=str, default="glow", help="Model name.")
     parser.add_argument("--seed", type=int, default=0, help="Random seed.")
@@ -65,7 +65,7 @@ def init_args() -> argparse.Namespace:
     parser.add_argument(
         "--y-conditional",
         action="store_true",
-        help="Use labels for conditional model " "(defualt=False).",
+        help="Use labels for conditional model (defualt=False).",
     )
 
     return parser.parse_args()
