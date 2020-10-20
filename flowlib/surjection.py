@@ -1,4 +1,3 @@
-
 """Surjection layers.
 
 ref)
@@ -24,21 +23,13 @@ class Slicing(FlowLayer):
         sigma (float, optional): Sigma of Normal distribution.
     """
 
-    def __init__(self, sigma: float = 1.0):
+    def __init__(self, sigma: float = 1.0) -> None:
         super().__init__()
 
+        self.sigma: Tensor
         self.register_buffer("sigma", torch.ones((1,)) * sigma)
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
-        """Forward propagation z = f(x) with log-determinant Jacobian.
-
-        Args:
-            x (torch.Tensor): Observations, size `(b, c, h, w)`.
-
-        Returns:
-            z (torch.Tensor): Encoded latents, size `(b, c, h, w)`.
-            logdet (torch.Tensor): Log determinant Jacobian.
-        """
 
         # z2 ~ N(x, I)
         z2 = x + torch.randn_like(x) * self.sigma
@@ -52,14 +43,6 @@ class Slicing(FlowLayer):
         return z, logdet
 
     def inverse(self, z: Tensor) -> Tensor:
-        """Inverse propagation x = f^{-1}(z).
-
-        Args:
-            z (torch.Tensor): latents, size `(b, c, h, w)`.
-
-        Returns:
-            x (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
-        """
 
         x, _ = torch.chunk(z, 2, dim=1)
 
@@ -70,15 +53,6 @@ class AbsSurjection(FlowLayer):
     """Absolute generative surjection."""
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
-        """Forward propagation z = f(x) with log-determinant Jacobian.
-
-        Args:
-            x (torch.Tensor): Observations, size `(b, c, h, w)`.
-
-        Returns:
-            z (torch.Tensor): Encoded latents, size `(b, c, h, w)`.
-            logdet (torch.Tensor): Log determinant Jacobian.
-        """
 
         s = torch.bernoulli(torch.sigmoid(x))
         z = s * x
@@ -90,14 +64,6 @@ class AbsSurjection(FlowLayer):
         return z, logdet
 
     def inverse(self, z: Tensor) -> Tensor:
-        """Inverse propagation x = f^{-1}(z).
-
-        Args:
-            z (torch.Tensor): latents, size `(b, c, h, w)`.
-
-        Returns:
-            x (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
-        """
 
         return z.abs()
 
@@ -106,15 +72,6 @@ class MaxSurjection(FlowLayer):
     """Max generative surjection layer."""
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
-        """Forward propagation z = f(x) with log-determinant Jacobian.
-
-        Args:
-            x (torch.Tensor): Observations, size `(b, c, h, w)`.
-
-        Returns:
-            z (torch.Tensor): Encoded latents, size `(b, c, h, w)`.
-            logdet (torch.Tensor): Log determinant Jacobian.
-        """
 
         # Reshape
         b, c, h, w = x.size()
@@ -149,14 +106,6 @@ class MaxSurjection(FlowLayer):
         return z, logdet
 
     def inverse(self, z: Tensor) -> Tensor:
-        """Inverse propagation x = f^{-1}(z).
-
-        Args:
-            z (torch.Tensor): latents, size `(b, c, h, w)`.
-
-        Returns:
-            x (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
-        """
 
         # Reshape
         b, c, h, w = z.size()
@@ -182,15 +131,6 @@ class SortSurjection(FlowLayer):
     """Sort generative surjection layer."""
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
-        """Forward propagation z = f(x) with log-determinant Jacobian.
-
-        Args:
-            x (torch.Tensor): Observations, size `(b, c, h, w)`.
-
-        Returns:
-            z (torch.Tensor): Encoded latents, size `(b, c, h, w)`.
-            logdet (torch.Tensor): Log determinant Jacobian.
-        """
 
         b, c, h, w = x.size()
         x = x.view(b, c, h * w)
@@ -211,14 +151,6 @@ class SortSurjection(FlowLayer):
         return z, logdet
 
     def inverse(self, z: Tensor) -> Tensor:
-        """Inverse propagation x = f^{-1}(z).
-
-        Args:
-            z (torch.Tensor): latents, size `(b, c, h, w)`.
-
-        Returns:
-            x (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
-        """
 
         b, c, h, w = z.size()
         z = z.view(b, c, h * w)

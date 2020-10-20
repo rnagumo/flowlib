@@ -1,4 +1,3 @@
-
 from typing import Tuple
 
 import torch
@@ -33,10 +32,11 @@ def affine_coupling_inverse() -> None:
     assert not torch.isnan(x).any()
 
 
-def _base_case(mask_type, inverse_mask) -> None:
+def _base_case(mask_type: str, inverse_mask: bool) -> None:
     scale_trans_net = TempNet()
     model = flowlib.MaskedAffineCoupling(
-        scale_trans_net, mask_type=mask_type, inverse_mask=inverse_mask)
+        scale_trans_net, mask_type=mask_type, inverse_mask=inverse_mask
+    )
 
     # Forward
     x = torch.randn(4, 3, 8, 8)
@@ -73,15 +73,11 @@ def test_channel_wise_false() -> None:
 def test_checkerboard_mask() -> None:
 
     mask = flowlib.checkerboard_mask(3, 4, inverse=False)
-    true_mask = torch.tensor([[1, 0, 1, 0],
-                              [0, 1, 0, 1],
-                              [1, 0, 1, 0]])
+    true_mask = torch.tensor([[1, 0, 1, 0], [0, 1, 0, 1], [1, 0, 1, 0]])
     assert (mask == true_mask).all()
 
     mask = flowlib.checkerboard_mask(3, 4, inverse=True)
-    true_mask = torch.tensor([[0, 1, 0, 1],
-                              [1, 0, 1, 0],
-                              [0, 1, 0, 1]])
+    true_mask = torch.tensor([[0, 1, 0, 1], [1, 0, 1, 0], [0, 1, 0, 1]])
     assert (mask == true_mask).all()
 
 

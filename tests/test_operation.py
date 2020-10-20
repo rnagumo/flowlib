@@ -1,4 +1,3 @@
-
 import torch
 import flowlib
 
@@ -11,23 +10,31 @@ def test_squeeze_forward() -> None:
     assert z.size() == (1, 4, 2, 2)
     assert logdet.size() == (1,)
 
-    z_true = torch.tensor([[
-        [[1, 3], [9, 11]],
-        [[2, 4], [10, 12]],
-        [[5, 7], [13, 15]],
-        [[6, 8], [14, 16]],
-    ]])
+    z_true = torch.tensor(
+        [
+            [
+                [[1, 3], [9, 11]],
+                [[2, 4], [10, 12]],
+                [[5, 7], [13, 15]],
+                [[6, 8], [14, 16]],
+            ]
+        ]
+    )
     assert (z == z_true).all()
 
 
 def test_squeeze_inverse() -> None:
     model = flowlib.Squeeze()
-    z = torch.tensor([[
-        [[1, 3], [9, 11]],
-        [[2, 4], [10, 12]],
-        [[5, 7], [13, 15]],
-        [[6, 8], [14, 16]],
-    ]])
+    z = torch.tensor(
+        [
+            [
+                [[1, 3], [9, 11]],
+                [[2, 4], [10, 12]],
+                [[5, 7], [13, 15]],
+                [[6, 8], [14, 16]],
+            ]
+        ]
+    )
     x = model.inverse(z)
 
     assert x.size() == (1, 1, 4, 4)
@@ -36,12 +43,16 @@ def test_squeeze_inverse() -> None:
 
 def test_unsqueeze_forward() -> None:
     model = flowlib.Unsqueeze()
-    x = torch.tensor([[
-        [[1, 3], [9, 11]],
-        [[2, 4], [10, 12]],
-        [[5, 7], [13, 15]],
-        [[6, 8], [14, 16]],
-    ]])
+    x = torch.tensor(
+        [
+            [
+                [[1, 3], [9, 11]],
+                [[2, 4], [10, 12]],
+                [[5, 7], [13, 15]],
+                [[6, 8], [14, 16]],
+            ]
+        ]
+    )
     z, logdet = model(x)
 
     assert z.size() == (1, 1, 4, 4)
@@ -56,12 +67,16 @@ def test_unsqueeze_inverse() -> None:
 
     assert x.size() == (1, 4, 2, 2)
 
-    x_true = torch.tensor([[
-        [[1, 3], [9, 11]],
-        [[2, 4], [10, 12]],
-        [[5, 7], [13, 15]],
-        [[6, 8], [14, 16]],
-    ]])
+    x_true = torch.tensor(
+        [
+            [
+                [[1, 3], [9, 11]],
+                [[2, 4], [10, 12]],
+                [[5, 7], [13, 15]],
+                [[6, 8], [14, 16]],
+            ]
+        ]
+    )
     assert (x == x_true).all()
 
 

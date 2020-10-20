@@ -1,8 +1,9 @@
+from typing import Tuple
 
 import pytest
 
 import torch
-from torch import nn
+from torch import nn, Tensor
 
 import flowlib
 
@@ -18,23 +19,21 @@ def test_linear_zeros_forward() -> None:
 
 # Temporal layer class
 class TempLayer(nn.Module):
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         return x, x.abs().mean().unsqueeze(0)
 
-    def inverse(self, z):
+    def inverse(self, z: Tensor) -> Tensor:
         return z
 
 
 @pytest.fixture
 def model() -> nn.Module:
     _model = flowlib.FlowModel()
-    _model.flow_list = nn.ModuleList([
-        TempLayer(), TempLayer()
-    ])
+    _model.flow_list = nn.ModuleList([TempLayer(), TempLayer()])
     return _model
 
 
-def test_example_forward(model) -> None:
+def test_example_forward(model: flowlib.FlowModel) -> None:
     x = torch.randn(2, 3, 32, 32)
     z, logdet = model(x)
 
@@ -42,7 +41,7 @@ def test_example_forward(model) -> None:
     assert logdet.size() == (2,)
 
 
-def test_example_prior(model) -> None:
+def test_example_prior(model: flowlib.FlowModel) -> None:
     mu, var = model.prior(2)
 
     assert mu.size() == (2, 3, 32, 32)
@@ -60,14 +59,14 @@ def test_example_prior(model) -> None:
         _ = model.prior(4, torch.arange(2))
 
 
-def test_example_inverse(model) -> None:
+def test_example_inverse(model: flowlib.FlowModel) -> None:
     z = torch.randn(2, 3, 32, 32)
     x = model.inverse(z)
 
     assert x.size() == z.size()
 
 
-def test_example_loss_func(model) -> None:
+def test_example_loss_func(model: flowlib.FlowModel) -> None:
     x = torch.randn(2, 3, 32, 32)
     loss_dict = model.loss_func(x)
 
@@ -78,7 +77,7 @@ def test_example_loss_func(model) -> None:
     assert loss_dict["classification"] == 0
 
 
-def test_example_loss_func_conditional(model) -> None:
+def test_example_loss_func_conditional(model: flowlib.FlowModel) -> None:
     x = torch.randn(2, 3, 32, 32)
     y = torch.arange(2)
     loss_dict = model.loss_func(x, y)
@@ -92,9 +91,7 @@ def test_example_loss_func_conditional(model) -> None:
 
 def test_example_sample() -> None:
     model = flowlib.FlowModel(z_size=(3, 32, 32))
-    model.flow_list = nn.ModuleList([
-        TempLayer(), TempLayer()
-    ])
+    model.flow_list = nn.ModuleList([TempLayer(), TempLayer()])
 
     x = model.sample(5)
     assert x.size() == (5, 3, 32, 32)
@@ -102,15 +99,13 @@ def test_example_sample() -> None:
 
 def test_example_sample_conditional() -> None:
     model = flowlib.FlowModel(z_size=(3, 32, 32))
-    model.flow_list = nn.ModuleList([
-        TempLayer(), TempLayer()
-    ])
+    model.flow_list = nn.ModuleList([TempLayer(), TempLayer()])
 
     x = model.sample(5, torch.arange(5))
     assert x.size() == (5, 3, 32, 32)
 
 
-def test_example_reconstruct(model) -> None:
+def test_example_reconstruct(model: flowlib.FlowModel) -> None:
     x = torch.randn(2, 3, 32, 32)
     recon = model.reconstruct(x)
 

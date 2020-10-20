@@ -1,4 +1,3 @@
-
 """Neural Networks.
 
 ref)
@@ -27,13 +26,19 @@ class Conv2dZeros(nn.Module):
         log_scale (float, optional): Log scale for output.
     """
 
-    def __init__(self, in_channels: int, out_channels: int, kernel_size: int,
-                 padding: int, bias: bool = True, log_scale: float = 3.0):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: int,
+        padding: int,
+        log_scale: float = 3.0,
+    ) -> None:
         super().__init__()
 
-        self.conv = nn.Conv2d(
-            in_channels, out_channels, kernel_size, padding=padding, bias=bias)
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, padding=padding, bias=True)
         self.conv.weight.data.zero_()
+        assert self.conv.bias is not None
         self.conv.bias.data.zero_()
 
         self.log_scale = log_scale
@@ -66,15 +71,12 @@ class ConvBlock(nn.Module):
         weight_std (float, optional): Std value for weight initialization.
     """
 
-    def __init__(self, in_channels: int, hidden_channels: int,
-                 weight_std: float = 0.05):
+    def __init__(self, in_channels: int, hidden_channels: int, weight_std: float = 0.05) -> None:
         super().__init__()
 
-        self.conv1 = nn.Conv2d(
-            in_channels, hidden_channels, 3, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(in_channels, hidden_channels, 3, padding=1, bias=False)
         self.conv2 = nn.Conv2d(hidden_channels, hidden_channels, 1, bias=False)
-        self.conv3 = Conv2dZeros(
-            hidden_channels, in_channels * 2, 3, padding=1)
+        self.conv3 = Conv2dZeros(hidden_channels, in_channels * 2, 3, padding=1)
 
         self.actnorm1 = ActNorm2d(hidden_channels)
         self.actnorm2 = ActNorm2d(hidden_channels)

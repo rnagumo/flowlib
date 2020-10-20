@@ -1,6 +1,3 @@
-
-"""Trainer class."""
-
 from typing import Dict, DefaultDict, Union, Optional
 
 import collections
@@ -60,7 +57,7 @@ class Trainer:
         config (dict): Dictionary of hyper-parameters.
     """
 
-    def __init__(self, model: flowlib.FlowModel, config: dict):
+    def __init__(self, model: flowlib.FlowModel, config: dict) -> None:
         # Params
         self.model = model
         self.config = Config(**config)
@@ -87,8 +84,7 @@ class Trainer:
         exist.
         """
 
-        self.logdir = pathlib.Path(
-            self.config.logdir, time.strftime("%Y%m%d%H%M"))
+        self.logdir = pathlib.Path(self.config.logdir, time.strftime("%Y%m%d%H%M"))
         self.logdir.mkdir(parents=True, exist_ok=True)
 
     def init_logger(self, save_file: bool = True) -> None:
@@ -105,8 +101,9 @@ class Trainer:
         # Set stream handler (console)
         sh = logging.StreamHandler()
         sh.setLevel(logging.INFO)
-        sh_fmt = logging.Formatter("%(asctime)s - %(module)s.%(funcName)s "
-                                   "- %(levelname)s : %(message)s")
+        sh_fmt = logging.Formatter(
+            "%(asctime)s - %(module)s.%(funcName)s " "- %(levelname)s : %(message)s"
+        )
         sh.setFormatter(sh_fmt)
         logger.addHandler(sh)
 
@@ -114,8 +111,9 @@ class Trainer:
         if save_file:
             fh = logging.FileHandler(filename=self.logdir / "training.log")
             fh.setLevel(logging.DEBUG)
-            fh_fmt = logging.Formatter("%(asctime)s - %(module)s.%(funcName)s "
-                                       "- %(levelname)s : %(message)s")
+            fh_fmt = logging.Formatter(
+                "%(asctime)s - %(module)s.%(funcName)s " "- %(levelname)s : %(message)s"
+            )
             fh.setFormatter(fh_fmt)
             logger.addHandler(fh)
 
@@ -136,41 +134,62 @@ class Trainer:
             # Transform
             # For training, augment datasets with horizontal flips according to
             # Real-NVP (L. Dinh+, 2017) paper.
-            trans_train = transforms.Compose([
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-            ])
-            trans_test = transforms.Compose([
-                transforms.ToTensor(),
-            ])
+            trans_train = transforms.Compose(
+                [
+                    transforms.RandomHorizontalFlip(),
+                    transforms.ToTensor(),
+                ]
+            )
+            trans_test = transforms.Compose(
+                [
+                    transforms.ToTensor(),
+                ]
+            )
 
             # Kwargs for dataset
-            train_kwargs = {"root": self.config.data_dir, "download": True,
-                            "train": True, "transform": trans_train}
-            test_kwargs = {"root": self.config.data_dir, "download": True,
-                           "train": False, "transform": trans_test}
+            train_kwargs = {
+                "root": self.config.data_dir,
+                "download": True,
+                "train": True,
+                "transform": trans_train,
+            }
+            test_kwargs = {
+                "root": self.config.data_dir,
+                "download": True,
+                "train": False,
+                "transform": trans_test,
+            }
 
             train_data = datasets.CIFAR10(**train_kwargs)
             test_data = datasets.CIFAR10(**test_kwargs)
 
         elif self.config.dataset_name == "celeba":
             # Transform
-            transform = transforms.Compose([
-                transforms.CenterCrop(self.config.image_size),
-                transforms.ToTensor(),
-            ])
+            transform = transforms.Compose(
+                [
+                    transforms.CenterCrop(self.config.image_size),
+                    transforms.ToTensor(),
+                ]
+            )
 
             # Kwargs for dataset
-            train_kwargs = {"root": self.config.data_dir, "download": True,
-                            "split": "train", "transform": transform}
-            test_kwargs = {"root": self.config.data_dir, "download": True,
-                           "split": "test", "transform": transform}
+            train_kwargs = {
+                "root": self.config.data_dir,
+                "download": True,
+                "split": "train",
+                "transform": transform,
+            }
+            test_kwargs = {
+                "root": self.config.data_dir,
+                "download": True,
+                "split": "test",
+                "transform": transform,
+            }
 
             train_data = datasets.CelebA(**train_kwargs)
             test_data = datasets.CelebA(**test_kwargs)
         else:
-            raise ValueError(
-                f"Unexpected dataset name: {self.config.dataset_name}")
+            raise ValueError(f"Unexpected dataset name: {self.config.dataset_name}")
 
         # Params for GPU
         if torch.cuda.is_available():
@@ -179,12 +198,12 @@ class Trainer:
             kwargs = {}
 
         self.train_loader = torch.utils.data.DataLoader(
-            train_data, shuffle=True, batch_size=self.config.batch_size,
-            **kwargs)
+            train_data, shuffle=True, batch_size=self.config.batch_size, **kwargs
+        )
 
         self.test_loader = torch.utils.data.DataLoader(
-            test_data, shuffle=False, batch_size=self.config.batch_size,
-            **kwargs)
+            test_data, shuffle=False, batch_size=self.config.batch_size, **kwargs
+        )
 
         self.logger.info(f"Train dataset size: {len(self.train_loader)}")
         self.logger.info(f"Test dataset size: {len(self.test_loader)}")
@@ -197,8 +216,7 @@ class Trainer:
 
             # Data to device
             data = data.to(self.device)
-            label = (label.to(self.device) if self.config.y_conditional
-                     else None)
+            label = label.to(self.device) if self.config.y_conditional else None
 
             # Forward
             self.optimizer.zero_grad()
@@ -207,10 +225,8 @@ class Trainer:
 
             # Backward and update
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(
-                self.model.parameters(), self.config.max_grad_norm)
-            torch.nn.utils.clip_grad_value_(
-                self.model.parameters(), self.config.max_grad_value)
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.max_grad_norm)
+            torch.nn.utils.clip_grad_value_(self.model.parameters(), self.config.max_grad_value)
             self.optimizer.step()
             self.scheduler.step()
 
@@ -223,8 +239,7 @@ class Trainer:
 
             # Summary
             for key, value in loss_dict.items():
-                self.writer.add_scalar(
-                    f"train/{key}", value.mean(), self.global_steps)
+                self.writer.add_scalar(f"train/{key}", value.mean(), self.global_steps)
 
             # Test
             if self.global_steps % self.config.test_interval == 0:
@@ -235,9 +250,7 @@ class Trainer:
                 self.save_checkpoint()
 
                 loss_logger = {k: v.mean() for k, v in loss_dict.items()}
-                self.logger.debug(
-                    f"Train loss (steps={self.global_steps}): "
-                    f"{loss_logger}")
+                self.logger.debug(f"Train loss (steps={self.global_steps}): " f"{loss_logger}")
 
                 self.save_plots()
 
@@ -257,8 +270,7 @@ class Trainer:
             with torch.no_grad():
                 # Data to device
                 data = data.to(self.device)
-                label = (label.to(self.device) if self.config.y_conditional
-                         else None)
+                label = label.to(self.device) if self.config.y_conditional else None
 
                 # Calculate loss
                 loss_dict = self.model.loss_func(data, label)
@@ -275,11 +287,10 @@ class Trainer:
         # Summary
         for key, value in loss_logger.items():
             self.writer.add_scalar(
-                f"test/{key}", value / (len(self.test_loader)),
-                self.global_steps)
+                f"test/{key}", value / (len(self.test_loader)), self.global_steps
+            )
 
-        self.logger.debug(
-            f"Test loss (steps={self.global_steps}): {loss_logger}")
+        self.logger.debug(f"Test loss (steps={self.global_steps}): {loss_logger}")
 
     def save_checkpoint(self) -> None:
         """Saves trained model and optimizer to checkpoint file.
@@ -331,8 +342,7 @@ class Trainer:
         with torch.no_grad():
             x, label = next(iter(self.test_loader))
             x = x[:16].to(self.device)
-            label = (label[:16].to(self.device) if self.config.y_conditional
-                     else None)
+            label = label[:16].to(self.device) if self.config.y_conditional else None
 
             recon = self.model.reconstruct(x)
             sample = self.model.sample(16, label)
@@ -385,10 +395,8 @@ class Trainer:
         self.model = self.model.to(self.device)
 
         # Optimizer
-        self.optimizer = optim.Adam(
-            self.model.parameters(), **self.config.optimizer_params)
-        self.scheduler = flowlib.NoamScheduler(
-            self.optimizer, **self.config.scheduler_params)
+        self.optimizer = optim.Adam(self.model.parameters(), **self.config.optimizer_params)
+        self.scheduler = flowlib.NoamScheduler(self.optimizer, **self.config.scheduler_params)
 
         # Progress bar
         self.pbar = tqdm.tqdm(total=self.config.max_steps)

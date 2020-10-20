@@ -1,4 +1,3 @@
-
 """Coupling layer.
 
 ref)
@@ -27,56 +26,36 @@ class AffineCoupling(FlowLayer):
         scale_trans_net (nn.Module): Function for scale and transition.
     """
 
-    def __init__(self, scale_trans_net: nn.Module):
+    def __init__(self, scale_trans_net: nn.Module) -> None:
         super().__init__()
 
         self.scale_trans_net = scale_trans_net
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
-        """Forward propagation z = f(x) with log-determinant Jacobian.
 
-        Args:
-            x (torch.Tensor): Observations, size `(b, c, h, w)`.
-
-        Returns:
-            z (torch.Tensor): Encoded latents, size `(b, c, h, w)`.
-            logdet (torch.Tensor): Log determinant Jacobian.
-        """
-
-        # Check channel
         channels = x.size(1)
         if channels % 2 != 0:
             raise ValueError("Channel number should be even.")
 
-        x_a = x[:, :channels // 2]
-        x_b = x[:, channels // 2:]
+        x_a = x[:, : channels // 2]
+        x_b = x[:, channels // 2 :]
 
         log_s, t = self.scale_trans_net(x_b)
         scale = torch.sigmoid(log_s + 2)
         z = torch.cat([((x_a + t) * scale), x_b], dim=1)
 
-        # Log determinant
         logdet = scale.log().sum(dim=[1, 2, 3])
 
         return z, logdet
 
     def inverse(self, z: Tensor) -> Tensor:
-        """Inverse propagation x = f^{-1}(z).
 
-        Args:
-            z (torch.Tensor): latents, size `(b, c, h, w)`.
-
-        Returns:
-            x (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
-        """
-
-        # Checks channel
         channels = z.size(1)
         if channels % 2 != 0:
             raise ValueError("Channel number should be even.")
 
-        z_a = z[:, :channels // 2]
-        z_b = z[:, channels // 2:]
+        z_a = z[:, : channels // 2]
+        z_b = z[:, channels // 2 :]
 
         log_s, t = self.scale_trans_net(z_b)
         scale = torch.sigmoid(log_s + 2)
@@ -94,28 +73,22 @@ class MaskedAffineCoupling(FlowLayer):
         inverse_mask (bool, optional): If `True`, reverse mask.
     """
 
-    def __init__(self, scale_trans_net: nn.Module,
-                 mask_type: str = "channel_wise", inverse_mask: bool = False):
+    def __init__(
+        self,
+        scale_trans_net: nn.Module,
+        mask_type: str = "channel_wise",
+        inverse_mask: bool = False,
+    ) -> None:
         super().__init__()
 
         if mask_type not in ["checkerboard", "channel_wise"]:
-            raise ValueError(
-                "Mask type should be 'checkerboard' or 'channel_wise'")
+            raise ValueError("Mask type should be 'checkerboard' or 'channel_wise'")
 
         self.scale_trans_net = scale_trans_net
         self.mask_type = mask_type
         self.inverse_mask = inverse_mask
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
-        """Forward propagation z = f(x) with log-determinant Jacobian.
-
-        Args:
-            x (torch.Tensor): Observations, size `(b, c, h, w)`.
-
-        Returns:
-            z (torch.Tensor): Encoded latents, size `(b, c, h, w)`.
-            logdet (torch.Tensor): Log determinant Jacobian.
-        """
 
         mask = self._generate_mask(x)
         x_a = x * (1 - mask)
@@ -132,14 +105,6 @@ class MaskedAffineCoupling(FlowLayer):
         return z, logdet
 
     def inverse(self, z: Tensor) -> Tensor:
-        """Inverse propagation x = f^{-1}(z).
-
-        Args:
-            z (torch.Tensor): latents, size `(b, c, h, w)`.
-
-        Returns:
-            x (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
-        """
 
         mask = self._generate_mask(z)
         z_a = z * (1 - mask)
@@ -153,14 +118,6 @@ class MaskedAffineCoupling(FlowLayer):
         return x
 
     def _generate_mask(self, x: Tensor) -> Tensor:
-        """Generates mask given inputs.
-
-        Args:
-            x (torch.Tensor): Input tensor.
-
-        Returns:
-            mask (torch.Tensor): Generated mask.
-        """
 
         if x.dim() == 4:
             _, channel, height, width = x.size()
@@ -180,8 +137,7 @@ class MaskedAffineCoupling(FlowLayer):
         return mask.to(x.device)
 
 
-def checkerboard_mask(height: int, width: int, inverse: bool = False
-                      ) -> Tensor:
+def checkerboard_mask(height: int, width: int, inverse: bool = False) -> Tensor:
     """Checker board mask pattern.
 
     Example (inverse=False):
@@ -219,8 +175,8 @@ def channel_wise_mask(channel: int, inverse: bool = False) -> Tensor:
 
     mask = torch.zeros(channel)
     if inverse:
-        mask[channel // 2:] = 1
+        mask[channel // 2 :] = 1
     else:
-        mask[:channel // 2] = 1
+        mask[: channel // 2] = 1
 
     return mask

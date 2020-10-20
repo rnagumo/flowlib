@@ -1,6 +1,3 @@
-
-"""Base classes for Flow models."""
-
 from typing import Dict, Tuple, Optional
 
 import math
@@ -19,14 +16,12 @@ class LinearZeros(nn.Linear):
         log_scale (float, optional): Log scale for output.
     """
 
-    def __init__(self, in_channels: int, out_channels: int,
-                 log_scale: float = 3.0):
+    def __init__(self, in_channels: int, out_channels: int, log_scale: float = 3.0) -> None:
         super().__init__(in_channels, out_channels)
 
         self.log_scale = log_scale
         self.logs = nn.Parameter(torch.zeros(out_channels))
 
-        # Initialize
         self.weight.data.zero_()
         self.bias.data.zero_()
 
@@ -85,23 +80,25 @@ class FlowModel(nn.Module):
         flow_list (nn.ModuleList): Module list of `FlowLayer` classes.
     """
 
-    def __init__(self, z_size: tuple = (3, 32, 32), temperature: float = 1.0,
-                 y_classes: int = 10, y_weight: float = 0.01):
+    def __init__(
+        self,
+        z_size: tuple = (3, 32, 32),
+        temperature: float = 1.0,
+        y_classes: int = 10,
+        y_weight: float = 0.01,
+    ) -> None:
         super().__init__()
 
         # List of flow layers, which should be overriden
         self.flow_list = nn.ModuleList()
 
-        # Latent size
         self.z_size = z_size
-
-        # Buffer for prior parameters
+        self.buffer: torch.Tensor
         self.register_buffer("buffer", torch.zeros(1, *z_size))
 
         # Temperature for prior: (p(x))^{T^2}
         self.temperature = temperature
 
-        # Y-conditional prior
         self.y_classes = y_classes
         self.y_weight = y_weight
 
@@ -109,7 +106,6 @@ class FlowModel(nn.Module):
         self.y_prior = LinearZeros(y_classes, z_channels * 2)
         self.y_projector = LinearZeros(z_channels, y_classes)
 
-        # Criterion for classification loss
         self.criterion = nn.BCEWithLogitsLoss()
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
@@ -146,8 +142,7 @@ class FlowModel(nn.Module):
 
         return z
 
-    def prior(self, batch: int, y: Optional[Tensor] = None
-              ) -> Tuple[Tensor, Tensor]:
+    def prior(self, batch: int, y: Optional[Tensor] = None) -> Tuple[Tensor, Tensor]:
         """Samples prior mu and var.
 
         Args:
@@ -168,13 +163,13 @@ class FlowModel(nn.Module):
             return mu, var
 
         if batch != y.size(0):
-            raise ValueError(f"Incompatible size: y batch size {y.size(0)} "
-                             f"should be the same as batch size {batch}")
+            raise ValueError(
+                f"Incompatible size: y batch size {y.size(0)} "
+                f"should be the same as batch size {batch}"
+            )
 
-        # One-hot encoding
         y = F.one_hot(y, num_classes=self.y_classes)
-
-        # Inference
+        assert y is not None
         h = self.y_prior(y.float())
         mu, logvar = torch.chunk(h, 2, dim=-1)
         var = F.softplus(logvar)
@@ -190,8 +185,7 @@ class FlowModel(nn.Module):
 
         return mu, var
 
-    def loss_func(self, x: Tensor, y: Optional[Tensor] = None
-                  ) -> Dict[str, Tensor]:
+    def loss_func(self, x: Tensor, y: Optional[Tensor] = None) -> Dict[str, Tensor]:
         """Loss function.
 
         loss = -log p(z) - log|det(dh_i/dh_{i-1})| + lmd * cross_entropy.
@@ -204,22 +198,15 @@ class FlowModel(nn.Module):
             loss_dict (dict of [str, torch.Tensor]): Calculated loss.
         """
 
-        # Inference z = f(x)
         z, logdet = self.forward(x)
-
-        # Negative logdet
         logdet = -logdet
-
-        # NLL of prior
         mu, var = self.prior(x.size(0), y)
         log_prob = nll_normal(z, mu, var, reduce=False)
         log_prob = log_prob.sum(dim=[1, 2, 3])
 
-        # Loss in bits per dimension
         pixels = torch.tensor(x.size()[1:]).prod().item()
         nll = ((log_prob + logdet) / pixels + math.log(256)) / math.log(2)
 
-        # Classification loss
         if y is None:
             loss_classes = x.new_zeros((1,))
         else:
@@ -227,11 +214,14 @@ class FlowModel(nn.Module):
             y = F.one_hot(y, num_classes=self.y_classes).float()
             loss_classes = self.y_weight * self.criterion(y_logits, y)
 
-        # Returned loss
         loss = nll + loss_classes
 
-        return {"loss": loss.mean(), "log_prob": log_prob.mean(),
-                "logdet": logdet.mean(), "classification": loss_classes.mean()}
+        return {
+            "loss": loss.mean(),
+            "log_prob": log_prob.mean(),
+            "logdet": logdet.mean(),
+            "classification": loss_classes.mean(),
+        }
 
     def sample(self, batch: int, y: Optional[Tensor] = None) -> Tensor:
         """Samples from prior.
@@ -265,16 +255,14 @@ class FlowModel(nn.Module):
         return recon
 
 
-def nll_normal(x: Tensor, mu: Tensor, var: Tensor, reduce: bool = True
-               ) -> Tensor:
+def nll_normal(x: Tensor, mu: Tensor, var: Tensor, reduce: bool = True) -> Tensor:
     """Negative log likelihood for 1-D Normal distribution.
 
     Args:
         x (torch.Tensor): Inputs tensor, size `(*, dim)`.
         mu (torch.Tensor): Mean vector, size `(*, dim)`.
         var (torch.Tensor): Variance vector, size `(*, dim)`.
-        reduce (bool, optional): If `True`, sum calculated loss for each
-            data point.
+        reduce (bool, optional): If `True`, sum calculated loss for each data point.
 
     Returns:
         nll (torch.Tensor): Calculated nll for each data, size `(*,)` if
@@ -298,8 +286,7 @@ def nll_bernoulli(x: Tensor, probs: Tensor, reduce: bool = True) -> Tensor:
     Args:
         x (torch.Tensor): Inputs tensor, size `(*, dim)`.
         probs (torch.Tensor): Probability parameter, size `(*, dim)`.
-        reduce (bool, optional): If `True`, sum calculated loss for each
-            data point.
+        reduce (bool, optional): If `True`, sum calculated loss for each data point.
 
     Returns:
         nll (torch.Tensor): Calculated nll for each data, size `(*,)` if

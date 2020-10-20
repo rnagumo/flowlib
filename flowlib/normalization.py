@@ -1,4 +1,3 @@
-
 """Normalization layers.
 
 ref)
@@ -23,7 +22,7 @@ class ActNorm2d(FlowLayer):
         scale (float, optional): Scaling factor.
     """
 
-    def __init__(self, in_channels: int, scale: float = 1.0):
+    def __init__(self, in_channels: int, scale: float = 1.0) -> None:
         super().__init__()
 
         in_size = (1, in_channels, 1, 1)
@@ -33,15 +32,6 @@ class ActNorm2d(FlowLayer):
         self.initialized = False
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
-        """Forward method.
-
-        Args:
-            x (torch.Tensor): Observations, size `(b, c, h, w)`.
-
-        Returns:
-            z (torch.Tensor): Encoded latents, size `(b, c, h, w)`.
-            logdet (torch.Tensor): Log determinant Jacobian.
-        """
 
         if not self.initialized:
             self.initialize_parameters(x)
@@ -49,21 +39,12 @@ class ActNorm2d(FlowLayer):
         z = x + self.bias
         z = z * torch.exp(self.weight)
 
-        # Compute Jacobian
         *_, h, w = x.size()
         logdet = self.weight.sum().unsqueeze(0) * h * w
 
         return z, logdet
 
     def inverse(self, z: Tensor) -> Tensor:
-        """Inverse propagation x = f^{-1}(z).
-
-        Args:
-            z (torch.Tensor): latents, size `(b, c, h, w)`.
-
-        Returns:
-            x (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
-        """
 
         if not self.initialized:
             self.initialize_parameters(z)
@@ -87,8 +68,7 @@ class ActNorm2d(FlowLayer):
         with torch.no_grad():
             # Channel-wise mean and var
             bias = -torch.mean(x.clone(), dim=[0, 2, 3], keepdim=True)
-            var = torch.mean(
-                (x.clone() + bias) ** 2, dim=[0, 2, 3], keepdim=True)
+            var = torch.mean((x.clone() + bias) ** 2, dim=[0, 2, 3], keepdim=True)
             weight = torch.log(self.scale / (torch.sqrt(var) + eps))
             self.weight.data.copy_(weight)
             self.bias.data.copy_(bias)

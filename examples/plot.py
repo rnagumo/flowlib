@@ -1,6 +1,3 @@
-
-"""Plot example."""
-
 import argparse
 
 import matplotlib.pyplot as plt
@@ -18,10 +15,12 @@ def main() -> None:
 
     # Settings
     parser = argparse.ArgumentParser(description="Flow training")
-    parser.add_argument("--root", type=str, default="./data/cifar/",
-                        help="Path to root directory of data.")
-    parser.add_argument("--cp-path", type=str, default="./logs/tmp/cp.pt",
-                        help="Path to checkpoint file.")
+    parser.add_argument(
+        "--root", type=str, default="./data/cifar/", help="Path to root directory of data."
+    )
+    parser.add_argument(
+        "--cp-path", type=str, default="./logs/tmp/cp.pt", help="Path to checkpoint file."
+    )
     args = parser.parse_args()
 
     # Load pre-trained model
@@ -31,10 +30,10 @@ def main() -> None:
 
     # Data
     trans_test = transforms.Compose([transforms.ToTensor()])
-    test_kwargs = {"root": args.root, "train": False, "download": False,
-                   "transform": trans_test}
+    test_kwargs = {"root": args.root, "train": False, "download": False, "transform": trans_test}
     loader = torch.utils.data.DataLoader(
-        datasets.CIFAR10(**test_kwargs), shuffle=False, batch_size=16)
+        datasets.CIFAR10(**test_kwargs), shuffle=False, batch_size=16
+    )
     data, _ = next(iter(loader))
 
     # Reconstruct and sample

@@ -1,4 +1,3 @@
-
 """Convolutional layers.
 
 ref)
@@ -23,28 +22,17 @@ class InvertibleConv(FlowLayer):
         in_channels (int): Channel size of input data.
     """
 
-    def __init__(self, in_channels: int):
+    def __init__(self, in_channels: int) -> None:
         super().__init__()
 
         self.weight = nn.Parameter(torch.randn(in_channels, in_channels))
         nn.init.orthogonal_(self.weight)
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
-        """Forward propagation z = f(x) with log-determinant Jacobian.
 
-        Args:
-            x (torch.Tensor): Observations, size `(b, c, h, w)`.
-
-        Returns:
-            z (torch.Tensor): Encoded latents, size `(b, c, h, w)`.
-            logdet (torch.Tensor): Log determinant Jacobian.
-        """
-
-        # Matrix multiplication
         weight = self.weight.view(*self.weight.size(), 1, 1)
         z = F.conv2d(x, weight)
 
-        # Log determinant
         *_, h, w = x.size()
         _, logdet = torch.slogdet(self.weight)
         logdet = logdet.unsqueeze(0) * (h * w)
@@ -52,14 +40,6 @@ class InvertibleConv(FlowLayer):
         return z, logdet
 
     def inverse(self, z: Tensor) -> Tensor:
-        """Inverse propagation x = f^{-1}(z).
-
-        Args:
-            z (torch.Tensor): latents, size `(b, c, h, w)`.
-
-        Returns:
-            x (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
-        """
 
         weight = torch.inverse(self.weight.double()).float()
         weight = weight.view(*self.weight.size(), 1, 1)
@@ -75,7 +55,7 @@ class InvertibleConvLU(FlowLayer):
         in_channels (int): Channel size of input data.
     """
 
-    def __init__(self, in_channels: int):
+    def __init__(self, in_channels: int) -> None:
         super().__init__()
 
         weight = torch.randn(in_channels, in_channels)
@@ -84,59 +64,47 @@ class InvertibleConvLU(FlowLayer):
         # LU decomposition
         a_lu, pivots = weight.lu()
         p, l, u = torch.lu_unpack(a_lu, pivots)
+        assert (p is not None) and (l is not None) and (u is not None)
+
+        self.p_mat: Tensor
         self.register_buffer("p_mat", p)
         self.l_mat = nn.Parameter(l)
         self.u_mat = nn.Parameter(u)
 
-        # Mask
+        self.l_mask: Tensor
+        self.u_mask: Tensor
         self.register_buffer("l_mask", torch.tril(torch.ones_like(weight), -1))
         self.register_buffer("u_mask", self.l_mask.t().clone())
 
-        # Sign
         s = torch.diag(u)
+        self.s_sign: Tensor
         self.register_buffer("s_sign", torch.sign(s))
         self.s_log = nn.Parameter(s.abs().log())
 
+        self.i_mat: Tensor
         self.register_buffer("i_mat", torch.eye(in_channels))
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
-        """Forward propagation z = f(x) with log-determinant Jacobian.
 
-        Args:
-            x (torch.Tensor): Observations, size `(b, c, h, w)`.
-
-        Returns:
-            z (torch.Tensor): Encoded latents, size `(b, c, h, w)`.
-            logdet (torch.Tensor): Log determinant Jacobian.
-        """
-
-        l = self.l_mat * self.l_mask + self.i_mat
-        u = self.u_mat * self.u_mask + (self.s_sign * self.s_log.exp()).diag()
-        w = self.p_mat @ l @ u
+        l_mat = self.l_mat * self.l_mask + self.i_mat
+        u_mat = self.u_mat * self.u_mask + (self.s_sign * self.s_log.exp()).diag()
+        w = self.p_mat @ l_mat @ u_mat
         w = w.contiguous().view(*w.size(), 1, 1)
         z = F.conv2d(x, w)
 
         # Log determinant
-        *_, h, w = x.size()
-        logdet = self.s_log.sum().unsqueeze(0) * h * w
+        *_, h_size, w_size = x.size()
+        logdet = self.s_log.sum().unsqueeze(0) * h_size * w_size
 
         return z, logdet
 
     def inverse(self, z: Tensor) -> Tensor:
-        """Inverse propagation x = f^{-1}(z).
 
-        Args:
-            z (torch.Tensor): latents, size `(b, c, h, w)`.
+        l_mat = self.l_mat * self.l_mask + self.i_mat
+        u_mat = self.u_mat * self.u_mask + (self.s_sign * self.s_log.exp()).diag()
 
-        Returns:
-            x (torch.Tensor): Decoded Observations, size `(b, c, h, w)`.
-        """
-
-        l = self.l_mat * self.l_mask + self.i_mat
-        u = self.u_mat * self.u_mask + (self.s_sign * self.s_log.exp()).diag()
-
-        l_inv = l.double().inverse().float()
-        u_inv = u.double().inverse().float()
+        l_inv = l_mat.double().inverse().float()
+        u_inv = u_mat.double().inverse().float()
         p_inv = self.p_mat.double().inverse().float()
         w = u_inv @ l_inv @ p_inv
         w = w.contiguous().view(*w.size(), 1, 1)
