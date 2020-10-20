@@ -11,12 +11,11 @@ import matplotlib.pyplot as plt
 import tqdm
 
 import torch
-from torch import optim
+from torch import Tensor, optim
 from torch.optim import optimizer
 from torch.utils.data import dataloader
 from torchvision import datasets, transforms
 from torchvision.utils import make_grid
-
 import tensorboardX as tb
 
 import flowlib
@@ -58,47 +57,72 @@ class Trainer:
     """
 
     def __init__(self, model: flowlib.FlowModel, config: dict) -> None:
-        # Params
-        self.model = model
-        self.config = Config(**config)
 
-        # Attributes
-        self.logdir: pathlib.Path
-        self.logger: logging.Logger
-        self.writer: tb.SummaryWriter
-        self.train_loader: dataloader.DataLoader
-        self.test_loader: dataloader.DataLoader
-        self.optimizer: optimizer.Optimizer
-        self.scheduler: optim.lr_scheduler._LRScheduler
-        self.device: torch.device
-        self.pbar: tqdm.tqdm
+        self._model = model
+        self._config = Config(**config)
+        self._global_steps = 0
+        self._postfix: Dict[str, float] = {}
 
-        # Training utils
-        self.global_steps = 0
-        self.postfix: Dict[str, float] = {}
+        self._logdir: pathlib.Path
+        self._logger: logging.Logger
+        self._writer: tb.SummaryWriter
+        self._train_loader: dataloader.DataLoader
+        self._test_loader: dataloader.DataLoader
+        self._optimizer: optimizer.Optimizer
+        self._scheduler: optim.lr_scheduler._LRScheduler
+        self._device: torch.device
+        self._pbar: tqdm.tqdm
 
-    def check_logdir(self) -> None:
-        """Checks log directory.
+    def run(self) -> None:
+        """Run main method."""
 
-        This method specifies logdir and make the directory if it does not
-        exist.
-        """
+        self._make_logdir()
+        self._init_logger()
+        self._init_writer()
 
-        self.logdir = pathlib.Path(self.config.logdir, time.strftime("%Y%m%d%H%M"))
-        self.logdir.mkdir(parents=True, exist_ok=True)
+        try:
+            self._run_body()
+        except Exception as e:
+            self._logger.exception(f"Run function error: {e}")
+        finally:
+            self._quit()
 
-    def init_logger(self, save_file: bool = True) -> None:
-        """Initalizes logger.
+    def _run_body(self) -> None:
 
-        Args:
-            save_file (bool, optoinal): If `True`, save log file.
-        """
+        self._logger.info("Start experiment")
+        self._logger.info(f"Logdir: {self._logdir}")
+        self._logger.info(f"Params: {self._config}")
 
-        # Initialize logger
+        if self._config.gpus:
+            self._device = torch.device(f"cuda:{self._config.gpus}")
+        else:
+            self._device = torch.device("cpu")
+
+        self._load_dataloader()
+        self._model = self._model.to(self._device)
+        self._optimizer = optim.Adam(self._model.parameters(), **self._config.optimizer_params)
+        self._scheduler = flowlib.NoamScheduler(self._optimizer, **self._config.scheduler_params)
+
+        self._pbar = tqdm.tqdm(total=self._config.max_steps)
+        self._global_steps = 0
+        self._postfix = {"train/loss": 0.0, "test/loss": 0.0}
+
+        while self._global_steps < self._config.max_steps:
+            self._train()
+
+        self._pbar.close()
+        self._logger.info("Finish training")
+
+    def _make_logdir(self) -> None:
+
+        self._logdir = pathlib.Path(self._config.logdir, time.strftime("%Y%m%d%H%M"))
+        self._logdir.mkdir(parents=True, exist_ok=True)
+
+    def _init_logger(self) -> None:
+
         logger = logging.getLogger()
         logger.setLevel(logging.DEBUG)
 
-        # Set stream handler (console)
         sh = logging.StreamHandler()
         sh.setLevel(logging.INFO)
         sh_fmt = logging.Formatter(
@@ -107,33 +131,28 @@ class Trainer:
         sh.setFormatter(sh_fmt)
         logger.addHandler(sh)
 
-        # Set file handler (log file)
-        if save_file:
-            fh = logging.FileHandler(filename=self.logdir / "training.log")
-            fh.setLevel(logging.DEBUG)
-            fh_fmt = logging.Formatter(
-                "%(asctime)s - %(module)s.%(funcName)s " "- %(levelname)s : %(message)s"
-            )
-            fh.setFormatter(fh_fmt)
-            logger.addHandler(fh)
+        fh = logging.FileHandler(filename=self._logdir / "training.log")
+        fh.setLevel(logging.DEBUG)
+        fh_fmt = logging.Formatter(
+            "%(asctime)s - %(module)s.%(funcName)s " "- %(levelname)s : %(message)s"
+        )
+        fh.setFormatter(fh_fmt)
+        logger.addHandler(fh)
 
-        self.logger = logger
+        self._logger = logger
 
-    def init_writer(self) -> None:
-        """Initializes tensorboard writer."""
+    def _init_writer(self) -> None:
 
-        self.writer = tb.SummaryWriter(str(self.logdir))
+        self._writer = tb.SummaryWriter(str(self._logdir))
 
-    def load_dataloader(self) -> None:
-        """Loads data loader for training and test."""
+    def _load_dataloader(self) -> None:
 
-        self.logger.info("Load dataset")
+        self._logger.info("Load dataset")
 
-        # Dataset
-        if self.config.dataset_name == "cifar":
+        if self._config.dataset_name == "cifar":
             # Transform
-            # For training, augment datasets with horizontal flips according to
-            # Real-NVP (L. Dinh+, 2017) paper.
+            # For training, augment datasets with horizontal flips according to Real-NVP
+            # (L. Dinh+, 2017) paper.
             trans_train = transforms.Compose(
                 [
                     transforms.RandomHorizontalFlip(),
@@ -146,15 +165,14 @@ class Trainer:
                 ]
             )
 
-            # Kwargs for dataset
             train_kwargs = {
-                "root": self.config.data_dir,
+                "root": self._config.data_dir,
                 "download": True,
                 "train": True,
                 "transform": trans_train,
             }
             test_kwargs = {
-                "root": self.config.data_dir,
+                "root": self._config.data_dir,
                 "download": True,
                 "train": False,
                 "transform": trans_test,
@@ -163,24 +181,22 @@ class Trainer:
             train_data = datasets.CIFAR10(**train_kwargs)
             test_data = datasets.CIFAR10(**test_kwargs)
 
-        elif self.config.dataset_name == "celeba":
-            # Transform
+        elif self._config.dataset_name == "celeba":
             transform = transforms.Compose(
                 [
-                    transforms.CenterCrop(self.config.image_size),
+                    transforms.CenterCrop(self._config.image_size),
                     transforms.ToTensor(),
                 ]
             )
 
-            # Kwargs for dataset
             train_kwargs = {
-                "root": self.config.data_dir,
+                "root": self._config.data_dir,
                 "download": True,
                 "split": "train",
                 "transform": transform,
             }
             test_kwargs = {
-                "root": self.config.data_dir,
+                "root": self._config.data_dir,
                 "download": True,
                 "split": "test",
                 "transform": transform,
@@ -189,169 +205,136 @@ class Trainer:
             train_data = datasets.CelebA(**train_kwargs)
             test_data = datasets.CelebA(**test_kwargs)
         else:
-            raise ValueError(f"Unexpected dataset name: {self.config.dataset_name}")
+            raise ValueError(f"Unexpected dataset name: {self._config.dataset_name}")
 
-        # Params for GPU
         if torch.cuda.is_available():
             kwargs = {"num_workers": 0, "pin_memory": True}
         else:
             kwargs = {}
 
-        self.train_loader = torch.utils.data.DataLoader(
-            train_data, shuffle=True, batch_size=self.config.batch_size, **kwargs
+        self._train_loader = torch.utils.data.DataLoader(
+            train_data, shuffle=True, batch_size=self._config.batch_size, **kwargs
         )
 
-        self.test_loader = torch.utils.data.DataLoader(
-            test_data, shuffle=False, batch_size=self.config.batch_size, **kwargs
+        self._test_loader = torch.utils.data.DataLoader(
+            test_data, shuffle=False, batch_size=self._config.batch_size, **kwargs
         )
 
-        self.logger.info(f"Train dataset size: {len(self.train_loader)}")
-        self.logger.info(f"Test dataset size: {len(self.test_loader)}")
+        self._logger.info(f"Train dataset size: {len(self._train_loader)}")
+        self._logger.info(f"Test dataset size: {len(self._test_loader)}")
 
-    def train(self) -> None:
-        """Trains model."""
+    def _train(self) -> None:
 
-        for data, label in self.train_loader:
-            self.model.train()
+        for data, label in self._train_loader:
+            self._model.train()
+            data = data.to(self._device)
+            label = label.to(self._device) if self._config.y_conditional else None
 
-            # Data to device
-            data = data.to(self.device)
-            label = label.to(self.device) if self.config.y_conditional else None
-
-            # Forward
-            self.optimizer.zero_grad()
-            loss_dict = self.model.loss_func(data, label)
+            self._optimizer.zero_grad()
+            loss_dict = self._model.loss_func(data, label)
             loss = loss_dict["loss"].mean()
-
-            # Backward and update
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.max_grad_norm)
-            torch.nn.utils.clip_grad_value_(self.model.parameters(), self.config.max_grad_value)
-            self.optimizer.step()
-            self.scheduler.step()
+            torch.nn.utils.clip_grad_norm_(self._model.parameters(), self._config.max_grad_norm)
+            torch.nn.utils.clip_grad_value_(self._model.parameters(), self._config.max_grad_value)
+            self._optimizer.step()
+            self._scheduler.step()
 
-            # Progress bar update
-            self.global_steps += 1
-            self.pbar.update(1)
+            self._global_steps += 1
+            self._pbar.update(1)
 
-            self.postfix["train/loss"] = loss.item()
-            self.pbar.set_postfix(self.postfix)
+            self._postfix["train/loss"] = loss.item()
+            self._pbar.set_postfix(self._postfix)
 
-            # Summary
             for key, value in loss_dict.items():
-                self.writer.add_scalar(f"train/{key}", value.mean(), self.global_steps)
+                self._writer.add_scalar(f"train/{key}", value.mean(), self._global_steps)
 
-            # Test
-            if self.global_steps % self.config.test_interval == 0:
-                self.test()
+            if self._global_steps % self._config.test_interval == 0:
+                self._test()
 
-            # Save checkpoint
-            if self.global_steps % self.config.save_interval == 0:
-                self.save_checkpoint()
+            if self._global_steps % self._config.save_interval == 0:
+                self._save_checkpoint()
 
                 loss_logger = {k: v.mean() for k, v in loss_dict.items()}
-                self.logger.debug(f"Train loss (steps={self.global_steps}): " f"{loss_logger}")
+                self._logger.debug(f"Train loss (steps={self._global_steps}): " f"{loss_logger}")
 
-                self.save_plots()
+                self._save_plots()
 
-            # Check step limit
-            if self.global_steps >= self.config.max_steps:
+            if self._global_steps >= self._config.max_steps:
                 break
 
-    def test(self) -> None:
-        """Tests model."""
+    def _test(self) -> None:
 
-        # Logger for loss
         loss_logger: DefaultDict[str, float] = collections.defaultdict(float)
-
-        # Run
-        self.model.eval()
-        for data, label in self.test_loader:
+        self._model.eval()
+        for data, label in self._test_loader:
             with torch.no_grad():
-                # Data to device
-                data = data.to(self.device)
-                label = label.to(self.device) if self.config.y_conditional else None
+                data = data.to(self._device)
+                label = label.to(self._device) if self._config.y_conditional else None
 
-                # Calculate loss
-                loss_dict = self.model.loss_func(data, label)
+                loss_dict = self._model.loss_func(data, label)
                 loss = loss_dict["loss"]
 
-            # Update progress bar
-            self.postfix["test/loss"] = loss.mean().item()
-            self.pbar.set_postfix(self.postfix)
+            self._postfix["test/loss"] = loss.mean().item()
+            self._pbar.set_postfix(self._postfix)
 
-            # Save loss
             for key, value in loss_dict.items():
                 loss_logger[key] += value.sum().item()
 
-        # Summary
         for key, value in loss_logger.items():
-            self.writer.add_scalar(
-                f"test/{key}", value / (len(self.test_loader)), self.global_steps
+            self._writer.add_scalar(
+                f"test/{key}", value / (len(self._test_loader)), self._global_steps
             )
 
-        self.logger.debug(f"Test loss (steps={self.global_steps}): {loss_logger}")
+        self._logger.debug(f"Test loss (steps={self._global_steps}): {loss_logger}")
 
-    def save_checkpoint(self) -> None:
-        """Saves trained model and optimizer to checkpoint file.
+    def _save_checkpoint(self) -> None:
 
-        Args:
-            loss (float): Saved loss value.
-        """
-
-        # Log
-        self.logger.debug("Save trained model")
+        self._logger.debug("Save trained model")
 
         # Remove unnecessary prefix from state dict keys
         model_state_dict = {}
-        for k, v in self.model.state_dict().items():
+        for k, v in self._model.state_dict().items():
             model_state_dict[k.replace("module.", "")] = v
 
         optimizer_state_dict = {}
-        for k, v in self.optimizer.state_dict().items():
+        for k, v in self._optimizer.state_dict().items():
             optimizer_state_dict[k.replace("module.", "")] = v
 
-        # Save model
         state_dict = {
-            "steps": self.global_steps,
+            "steps": self._global_steps,
             "model_state_dict": model_state_dict,
             "optimizer_state_dict": optimizer_state_dict,
         }
-        path = self.logdir / f"checkpoint_{self.global_steps}.pt"
+        path = self._logdir / f"checkpoint_{self._global_steps}.pt"
         torch.save(state_dict, path)
 
-    def save_configs(self) -> None:
-        """Saves setting including config and args in json format."""
+    def _save_configs(self) -> None:
 
-        self.logger.debug("Save configs")
+        self._logger.debug("Save configs")
+        config = dataclasses.asdict(self._config)
+        config["logdir"] = str(self._logdir)
 
-        config = dataclasses.asdict(self.config)
-        config["logdir"] = str(self.logdir)
-
-        with (self.logdir / "config.json").open("w") as f:
+        with (self._logdir / "config.json").open("w") as f:
             json.dump(config, f)
 
-    def save_plots(self) -> None:
-        """Save reconstructed and sampled plots."""
-
-        def gridshow(img):
+    def _save_plots(self) -> None:
+        def gridshow(img: Tensor) -> None:
             grid = make_grid(img)
             npgrid = grid.permute(1, 2, 0).numpy()
             plt.imshow(npgrid, interpolation="nearest")
 
         with torch.no_grad():
-            x, label = next(iter(self.test_loader))
-            x = x[:16].to(self.device)
-            label = label[:16].to(self.device) if self.config.y_conditional else None
+            x, label = next(iter(self._test_loader))
+            x = x[:16].to(self._device)
+            label = label[:16].to(self._device) if self._config.y_conditional else None
 
-            recon = self.model.reconstruct(x)
-            sample = self.model.sample(16, label)
+            recon = self._model.reconstruct(x)
+            sample = self._model.sample(16, label)
 
-        x = x.cpu()
-        recon = recon.cpu()
-        sample = sample.cpu()
+            x = x.cpu()
+            recon = recon.cpu()
+            sample = sample.cpu()
 
-        # Plot
         plt.figure(figsize=(20, 12))
 
         plt.subplot(311)
@@ -367,67 +350,11 @@ class Trainer:
         plt.title("Sampled")
 
         plt.tight_layout()
-        plt.savefig(self.logdir / f"fig_{self.global_steps}.png")
+        plt.savefig(self._logdir / f"fig_{self._global_steps}.png")
         plt.close()
 
-    def quit(self) -> None:
-        """Post process."""
+    def _quit(self) -> None:
 
-        self.logger.info("Quit base run method")
-        self.save_configs()
-        self.writer.close()
-
-    def _base_run(self) -> None:
-        """Base running method."""
-
-        self.logger.info("Start experiment")
-
-        # Device
-        if self.config.gpus:
-            self.device = torch.device(f"cuda:{self.config.gpus}")
-        else:
-            self.device = torch.device("cpu")
-
-        # Data
-        self.load_dataloader()
-
-        # Model
-        self.model = self.model.to(self.device)
-
-        # Optimizer
-        self.optimizer = optim.Adam(self.model.parameters(), **self.config.optimizer_params)
-        self.scheduler = flowlib.NoamScheduler(self.optimizer, **self.config.scheduler_params)
-
-        # Progress bar
-        self.pbar = tqdm.tqdm(total=self.config.max_steps)
-        self.global_steps = 0
-        self.postfix = {"train/loss": 0.0, "test/loss": 0.0}
-
-        # Run training
-        while self.global_steps < self.config.max_steps:
-            self.train()
-
-        self.pbar.close()
-        self.logger.info("Finish training")
-
-    def run(self) -> None:
-        """Main run method."""
-
-        # Settings
-        self.check_logdir()
-        self.init_logger()
-        self.init_writer()
-
-        self.logger.info("Start run")
-        self.logger.info(f"Logdir: {self.logdir}")
-        self.logger.info(f"Params: {self.config}")
-
-        # Run
-        try:
-            self._base_run()
-        except Exception as e:
-            self.logger.exception(f"Run function error: {e}")
-        finally:
-            self.quit()
-
-        self.logger.info("Finish run")
+        self._logger.info("Quit base run method")
+        self._save_configs()
+        self._writer.close()
