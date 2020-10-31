@@ -6,6 +6,7 @@ from .coupling import (  # noqa
     checkerboard_mask,
     channel_wise_mask,
 )
+from .experiment import Trainer  # noqa
 from .glow import Glow  # noqa
 from .neuralnet import Conv2dZeros, ConvBlock  # noqa
 from .normalization import ActNorm2d  # noqa

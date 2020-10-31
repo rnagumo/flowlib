@@ -19,7 +19,9 @@ class NoamScheduler(_LRScheduler):
         d_dim (int): Dimension size of output.
     """
 
-    def __init__(self, optimizer: torch.optim.Optimizer, warmup_steps: int, d_dim: int) -> None:
+    def __init__(
+        self, optimizer: torch.optim.Optimizer, warmup_steps: int = 4000, d_dim: int = 1
+    ) -> None:
 
         self.warmup_steps = warmup_steps
         self.d_dim = d_dim
